@@ -7,7 +7,6 @@ function TableCreateDropTest() {
 		this.assertEquals( $SHEET.getSheetByName("test_table"), null );
 		Database.create("test_table", function(table) {
 			table.primary("id");
-			table.timestamps();
 		});
 		this.assertNotEquals( $SHEET.getSheetByName("test_table"), null );
 	});
@@ -17,7 +16,6 @@ function TableCreateDropTest() {
 		try {
 			Database.create("test_table", function(table) {
 				table.primary("id");
-				table.timestamps();
 			});
 		} catch( error ) {
 			this.assertTrue(error instanceof TableExistsError);

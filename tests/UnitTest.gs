@@ -59,21 +59,22 @@ function UnitTest( unit_name ) {
 	this.tests  = [];
 	this.tested = false;
 	/**
-     * Adds a new Test
-     * @param name      - The Test name
-     * @param test      - The Test function
-     */
-	this.add = function(name, test) { this.tests.push( new Test(name, test) ); }
+	 * Adds a new Test
+	 * @param name      - The Test name
+	 * @param test      - The Test function
+	 */
+	this.add = function(name, test) { this.tests.push( new Test(name, test) ); };
 	
 	/**
 	 * Runs the Unit
 	 */
-	this.run = function() { this.tests.forEach(function(test) { test.run(); }); this.tested = true; }
+	this.setup = function() {}; this.close = function() {};
+	this.run   = function() { this.setup(); this.tests.forEach(function(test) { test.run(); }); this.tested = true; this.close(); };
 	
 	/**
 	 * Export Unit to HTML
 	 * @param show      - Optional. True, to show a modal in the Spreadsheet.
-     */
+	 */
 	this.exportHTML = function( show ) {
 		if( !this.tested )
 			return "";
@@ -102,7 +103,7 @@ function UnitTest( unit_name ) {
 			SpreadsheetApp.getUi().showModalDialog(content, "Test results - " + this.name);
 		}
 		return html;
-	}
+	};
 	
 	var AssertionError = function AssertionError(value, expected, message) {
 		this.name     = "AssertionError";
