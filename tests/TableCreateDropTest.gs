@@ -40,6 +40,6 @@ function TableCreateDropTest() {
 		this.assertTrue(error instanceof TableNotFoundError);
 	});
 	
-	// Run and show results
-	unit.run(); unit.exportHTML(true);
+	// Run and return results
+	unit.run(); return unit;
 }

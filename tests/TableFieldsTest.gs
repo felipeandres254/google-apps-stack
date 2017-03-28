@@ -6,7 +6,6 @@ function TableFieldsTest() {
 			Database.drop("test_table");
 		Database.create("test_table", function(table) {});
 	};
-	
 	unit.close = function() {
 		Database.drop("test_table");
 	};
@@ -63,20 +62,20 @@ function TableFieldsTest() {
 	
 	unit.add("Field tags", function() {
 		Database.table("test_table", function(table) {
-			table.string("test_unique_string").unique();
-			table.string("test_nullable_string").nullable();
+			table.string("test_string_unique").unique();
+			table.string("test_string_nullable").nullable();
 		});
 		var sheet = $SHEET.getSheetByName("test_table"), cell;
 		
 		cell = sheet.getRange(1, sheet.getMaxColumns()-1, 1, 1);
-		this.assertEquals(cell.getValues()[0][0], "test_unique_string");
+		this.assertEquals(cell.getValues()[0][0], "test_string_unique");
 		this.assertEquals(cell.getNotes()[0][0], "string\nunique");
 		
 		cell = sheet.getRange(1, sheet.getMaxColumns(), 1, 1);
-		this.assertEquals(cell.getValues()[0][0], "test_nullable_string");
+		this.assertEquals(cell.getValues()[0][0], "test_string_nullable");
 		this.assertEquals(cell.getNotes()[0][0], "string\nnullable");
 	});
 	
-	// Run and show results
-	unit.run(); unit.exportHTML(true);
+	// Run and return results
+	unit.run(); return unit;
 }
