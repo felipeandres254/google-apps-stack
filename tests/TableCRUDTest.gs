@@ -20,17 +20,17 @@ function TableCRUDTest() {
 	
 	// Add Tests
 	unit.add("Read row", function() {
-		var rows = Table.get("test_table").get();
+		var rows = Database.table("test_table").get();
 		this.assertEquals(rows.length, 1);
 		this.assertEquals(rows[0].id, "da39a3ee5e");
 		this.assertEquals(rows[0].test_string, "test");
 		this.assertEquals(rows[0].test_string_length, "abcdefghijklmno");
 		this.assertEquals(rows[0].test_string_unique, "unique");
-		this.assertEquals(rows[0].test_string_nullable, "NULL");
+		this.assertEquals(rows[0].test_string_nullable, "");
 	});
 	
 	unit.add("Insert row", function() {
-		Table.get("test_table").insert({
+		Database.table("test_table").insert({
 			"id":"e5ee3a93ad",
 			"test_string":"test_2",
 			"test_string_length":"zyxwvutsrqponml",
@@ -38,7 +38,7 @@ function TableCRUDTest() {
 			"test_string_nullable":null
 		});
 		
-		var rows = Table.get("test_table").get();
+		var rows = Database.table("test_table").get();
 		this.assertEquals(rows.length, 2);
 		this.assertEquals(rows[0].id, "e5ee3a93ad");
 		this.assertEquals(rows[0].test_string, "test_2");
@@ -50,54 +50,57 @@ function TableCRUDTest() {
 	unit.add("Update row", function() {
 		var row;
 		
-		Table.get("test_table").where("id", "e5ee3a93ad").update({"test_string":"aaaaaaaaaa"});
-		row = Table.get("test_table").where("id", "e5ee3a93ad").get()[0];
+		Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string":"aaaaaaaaaa"});
+		row = Database.table("test_table").where("id", "=", "da39a3ee5e").get()[0];
 		this.assertEquals(row.test_string, "aaaaaaaaaa");
 		
-		Table.get("test_table").where("id", "e5ee3a93ad").update({"test_string_length":"abcdefghijklmno"});
-		row = Table.get("test_table").where("id", "e5ee3a93ad").get()[0];
+		Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string_length":"abcdefghijklmno"});
+		row = Database.table("test_table").where("id", "=", "da39a3ee5e").get()[0];
 		this.assertEquals(row.test_string_length, "abcdefghijklmno");
 		
-		Table.get("test_table").where("id", "e5ee3a93ad").update({"test_string_unique":"unique_3"});
-		row = Table.get("test_table").where("id", "e5ee3a93ad").get()[0];
+		Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string_unique":"unique_3"});
+		row = Database.table("test_table").where("id", "=", "da39a3ee5e").get()[0];
 		this.assertEquals(row.test_string_unique, "unique_3");
 	});
 	
 	unit.add("Update row with errors", function() {
 		try {
-			Table.get("test_table").where("id", "e5ee3a93ad").update({"id":"aaaaaaaaaa"});
+			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"id":"aaaaaaaaaa"});
 		} catch( error ) {
 			this.assertTrue(error instanceof TableIntegrityError);
 			this.assertEquals(error.message, "Can't update Primary Key value");
 		}
+		this.assertEquals(Database.table("test_table").get()[1].id, "da39a3ee5e");
 		
 		try {
-			Table.get("test_table").where("id", "e5ee3a93ad").update({"test_string":null});
+			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string":null});
 		} catch( error ) {
 			this.assertTrue(error instanceof TableFieldError);
 			this.assertEquals(error.field, "test_string");
 			this.assertEquals(error.message, "Field value is invalid");
 		}
+		this.assertEquals(Database.table("test_table").get()[1].test_string, "aaaaaaaaaa");
 		
 		try {
-			Table.get("test_table").where("id", "e5ee3a93ad").update({"test_string_length":"abc"});
+			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string_length":"abc"});
 		} catch( error ) {
 			this.assertTrue(error instanceof TableFieldError);
 			this.assertEquals(error.field, "test_string_length");
 			this.assertEquals(error.message, "Field length is invalid");
 		}
+		this.assertEquals(Database.table("test_table").get()[1].test_string_length, "abcdefghijklmno");
 	});
 	
 	unit.add("Delete row", function() {
-		var rows;
+		var rows = Database.table("test_table").get();
 		this.assertEquals(rows.length, 2);
 		
-		Table.get("test_table").where("id", "e5ee3a93ad").remove();
-		rows = Table.get("test_table").get();
+		Database.table("test_table").where("id", "=", "e5ee3a93ad").remove();
+		rows = Database.table("test_table").get();
 		this.assertEquals(rows.length, 1);
 		
-		Table.get("test_table").where("id", "da39a3ee5e").remove();
-		rows = Table.get("test_table").get();
+		Database.table("test_table").where("id", "=", "da39a3ee5e").remove();
+		rows = Database.table("test_table").get();
 		this.assertEquals(rows.length, 0);
 	});
 	

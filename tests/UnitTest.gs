@@ -35,10 +35,11 @@ function UnitTest( unit_name ) {
 		this.run = function() {
 			try {
 				this.test(); this.result = {"outcome":"PASS"};
-			} catch( error if error instanceof AssertionError ) {
-				this.result = {"outcome":"FAIL", "message":error.message};
-			} catch( e ) {
-				this.result = {"outcome":"ERROR", "error":e};
+			} catch( error ) {
+				if( error instanceof AssertionError )
+					this.result = {"outcome":"FAIL", "message":error.message};
+				else
+					this.result = {"outcome":"ERROR", "error":error};
 			}
 		};
 		
@@ -77,11 +78,14 @@ function UnitTest( unit_name ) {
 		this.value    = value;
 		this.message  = message;
 		this.stack    = (new Error).stack;
-	}
+	};
 	AssertionError.prototype = Object.create(Error.prototype);
 	AssertionError.prototype.constructor = AssertionError;
 }
 
+// ==================================================
+//  RUN TESTS MAIN FUNCTION
+// ==================================================
 function RunTests() {
 	var tests = [TableCreateDropTest, TableFieldsTest, TableCRUDTest];
 	tests = tests.map(function(unit) { return unit(); });
