@@ -35,10 +35,11 @@ function UnitTest( unit_name ) {
 		this.run = function() {
 			try {
 				this.test(); this.result = {"outcome":"PASS"};
-			} catch( error if error instanceof AssertionError ) {
-				this.result = {"outcome":"FAIL", "message":error.message};
-			} catch( e ) {
-				this.result = {"outcome":"ERROR", "error":e};
+			} catch( error ) {
+				if( error instanceof AssertionError )
+					this.result = {"outcome":"FAIL", "message":error.message};
+				else
+					this.result = {"outcome":"ERROR", "error":error};
 			}
 		};
 		
@@ -71,47 +72,47 @@ function UnitTest( unit_name ) {
 	this.setup = function() {}; this.close = function() {};
 	this.run   = function() { this.setup(); this.tests.forEach(function(test) { test.run(); }); this.tested = true; this.close(); };
 	
-	/**
-	 * Export Unit to HTML
-	 * @param show      - Optional. True, to show a modal in the Spreadsheet.
-	 */
-	this.exportHTML = function( show ) {
-		if( !this.tested )
-			return "";
-		
-		var css = [
-			"<style type=\"text/css\">* { font-size:14px; font-family:sans-serif; } pre, pre * { font-size:13px; font-family:monospace; } ",
-			"ul { list-style:none; padding-left:25px; } ul.results li { width:125px; display:inline-block; } ul:not(.results) { max-height:425px; overflow-x:hidden; overflow-y:auto; } li.result:before { content:\"\"; width:25px; height:25px; margin-left:-25px; float:left; display:block; } li.result span { line-height:25px; } li.result pre { margin-top:0px; } ",
-			"li.result.pass:before { background:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='25' height='25'><defs><radialGradient id='radial' cx='40%' cy='40%' r='40%' fx='25%' fy='25%'><stop offset='0%' style='stop-color:#fff;'/><stop offset='100%' style='stop-color:#0a0;'/></radialGradient></defs><circle cx='12.5' cy='12.5' r='7.5' fill='url(#radial)'></circle></svg>\"); } ",
-			"li.result.fail:before { background:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='25' height='25'><defs><radialGradient id='radial' cx='40%' cy='40%' r='40%' fx='25%' fy='25%'><stop offset='0%' style='stop-color:#fff;'/><stop offset='100%' style='stop-color:#c00;'/></radialGradient></defs><circle cx='12.5' cy='12.5' r='7.5' fill='url(#radial)'></circle></svg>\"); } ",
-			"li.result.error:before { background:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='25' height='25'><defs><radialGradient id='radial' cx='40%' cy='40%' r='40%' fx='25%' fy='25%'><stop offset='0%' style='stop-color:#fff;'/><stop offset='100%' style='stop-color:#666;'/></radialGradient></defs><circle cx='12.5' cy='12.5' r='7.5' fill='url(#radial)'></circle></svg>\"); }</style>"
-		].join("");
-		
-		var totals = [
-			"<ul class=\"results\"><li class=\"result pass\"><span><b>Passed:</b> ",
-			this.tests.filter(function(test) { return test.result.outcome=="PASS"; }).length + "</span></li>",
-			"<li class=\"result fail\"><span><b>Failed:</b> ",
-			this.tests.filter(function(test) { return test.result.outcome=="FAIL"; }).length + "</span></li>",
-			"<li class=\"result error\"><span><b>Errors:</b> ",
-			this.tests.filter(function(test) { return test.result.outcome=="ERROR"; }).length + "</span></li></ul>",
-		].join("");
-		var results = "<ul>" + this.tests.map(function(test) { return test.parseHTML(); }).join("") + "</ul>";
-		
-		var html = css + totals + results;
-		if( show ) {
-			var content = HtmlService.createHtmlOutput(html).setWidth(500).setHeight(500);
-			SpreadsheetApp.getUi().showModalDialog(content, "Test results - " + this.name);
-		}
-		return html;
-	};
-	
 	var AssertionError = function AssertionError(value, expected, message) {
 		this.name     = "AssertionError";
 		this.expected = expected;
 		this.value    = value;
 		this.message  = message;
 		this.stack    = (new Error).stack;
-	}
+	};
 	AssertionError.prototype = Object.create(Error.prototype);
 	AssertionError.prototype.constructor = AssertionError;
+}
+
+// ==================================================
+//  RUN TESTS MAIN FUNCTION
+// ==================================================
+function RunTests() {
+	var tests = [TableCreateDropTest, TableFieldsTest, TableCRUDTest];
+	tests = tests.map(function(unit) { return unit(); });
+	
+	var css = [
+		"<style type=\"text/css\">* { font-size:14px; font-family:sans-serif; } pre, pre * { font-size:10px; font-family:monospace; } .test-results { margin:5px 0px; } hr { width:90%; margin:15px 5%; border:none; border-top:1px solid gray; } ul { list-style:none; padding-left:20px; } ",
+		"ul#totals li { width:125px; display:inline-block; } div#results { max-height:425px; overflow-x:hidden; overflow-y:auto; } li.result:before { content:\"\"; width:20px; height:20px; margin-left:-20px; float:left; display:block; } li.result span { line-height:20px; } div#results li.result span, div#results li.result span b { font-size:12px; } li.result pre { margin-top:0px; } ",
+		"li.result.pass:before { background:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><defs><radialGradient id='radial' cx='40%' cy='40%' r='40%' fx='25%' fy='25%'><stop offset='0%' style='stop-color:#fff;'/><stop offset='100%' style='stop-color:#0a0;'/></radialGradient></defs><circle cx='10' cy='10' r='5' fill='url(#radial)'></circle></svg>\"); } ",
+		"li.result.fail:before { background:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><defs><radialGradient id='radial' cx='40%' cy='40%' r='40%' fx='25%' fy='25%'><stop offset='0%' style='stop-color:#fff;'/><stop offset='100%' style='stop-color:#c00;'/></radialGradient></defs><circle cx='10' cy='10' r='5' fill='url(#radial)'></circle></svg>\"); } ",
+		"li.result.error:before { background:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><defs><radialGradient id='radial' cx='40%' cy='40%' r='40%' fx='25%' fy='25%'><stop offset='0%' style='stop-color:#fff;'/><stop offset='100%' style='stop-color:#666;'/></radialGradient></defs><circle cx='10' cy='10' r='5' fill='url(#radial)'></circle></svg>\"); }</style>"
+	].join("");
+	
+	var totals = {"pass":0, "fail":0, "error":0};
+	tests.forEach(function(unit) {
+		totals.pass  += unit.tests.filter(function(test) { return test.result.outcome=="PASS"; }).length;
+		totals.fail  += unit.tests.filter(function(test) { return test.result.outcome=="FAIL"; }).length;
+		totals.error += unit.tests.filter(function(test) { return test.result.outcome=="ERROR"; }).length;
+	});
+	totals = [
+		"<ul id=\"totals\"><li class=\"result pass\"><span><b>Passed:</b> " + totals.pass + "</span></li>",
+		"<li class=\"result fail\"><span><b>Failed:</b> " + totals.fail + "</span></li>",
+		"<li class=\"result error\"><span><b>Errors:</b> " + totals.error + "</span></li></ul>"
+	].join("");
+	
+	var results = "<div id=\"results\">" + tests.map(function(unit) {
+		return "<b>" + unit.name + "</b><ul class=\"test-results\">" + unit.tests.map(function(test) { return test.parseHTML(); }).join("") + "</ul>";
+	}).join("<hr>") + "</div>";
+	var content = HtmlService.createHtmlOutput(css + totals + results).setWidth(500).setHeight(500);
+	SpreadsheetApp.getUi().showModalDialog(content, "Test results");
 }

@@ -6,10 +6,7 @@ var $SHEET = SpreadsheetApp.getActiveSpreadsheet();
 // ==================================================
 //  DATABASE FUNCTIONS
 // ==================================================
-/**
- * Define the Database wrapper
- */
-function Database() {}
+var Database = {};
 
 /**
  * Create a new Database Table
@@ -25,11 +22,11 @@ Database.create = function( table, fields ) {
 	if( !fields || (typeof fields !== "function") )
 		throw new TableCreateError;
 	
-	// Set Table from name
+	// Check if Table exists
 	if( $SHEET.getSheetByName( table )!==null )
 		throw new TableExistsError( table );
 	
-	// Create a new table
+	// Create a new Table
 	table = new Table( table );
 	fields( table );
 };
@@ -54,14 +51,17 @@ Database.drop = function( table ) {
  * @throws TableIntegrityError, if the parameters are not defined
  */
 Database.table = function( table, fields ) {
- if( !table || (typeof table !== "string") )
-	throw new TableIntegrityError( "Table parameters are invalid" );
+	if( !table || (typeof table !== "string") )
+		throw new TableIntegrityError( "Table parameters are invalid" );
 	
-	var table = new Table(table);
+	// Check if Table exists
+	if( $SHEET.getSheetByName( table )===null )
+		throw new TableNotFoundError( table );
+	table = new Table(table);
 	
 	// Update table fields
 	if( fields && (typeof fields === "function") )
 		fields(table);
-	
-	return table;
+	else
+		return table;
 };

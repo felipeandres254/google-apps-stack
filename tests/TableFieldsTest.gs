@@ -76,6 +76,6 @@ function TableFieldsTest() {
 		this.assertEquals(cell.getNotes()[0][0], "string\nnullable");
 	});
 	
-	// Run and show results
-	unit.run(); unit.exportHTML(true);
+	// Run and return results
+	unit.run(); return unit;
 }
