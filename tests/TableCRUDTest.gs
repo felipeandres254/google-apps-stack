@@ -2,7 +2,7 @@ function TableCRUDTest() {
 	// Create Unit Test
 	var unit = new UnitTest("Table CRUD");
 	unit.setup = function() {
-		if( $SHEET.getSheetByName("test_table")!==null )
+		if( $SS.getSheetByName("test_table")!==null )
 			Database.drop("test_table");
 		Database.create("test_table", function(table) {
 			table.primary("id");
@@ -11,7 +11,7 @@ function TableCRUDTest() {
 			table.string("test_string_unique").unique();
 			table.string("test_string_nullable").nullable();
 		});
-		var sheet = $SHEET.getSheetByName("test_table");
+		var sheet = $SS.getSheetByName("test_table");
 		sheet.getRange(2, 1, 1, sheet.getMaxColumns()).setValues([["da39a3ee5e", "test", "abcdefghijklmno", "unique", null]]);
 	};
 	unit.close = function() {
