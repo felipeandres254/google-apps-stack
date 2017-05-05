@@ -1,67 +1,57 @@
 // ==================================================
 //  PARENT SPREADSHEET
 // ==================================================
-var $SHEET = SpreadsheetApp.getActiveSpreadsheet();
+/** @const {Spreadsheet} */
+$SS = SpreadsheetApp.getActiveSpreadsheet();
 
 // ==================================================
 //  DATABASE FUNCTIONS
 // ==================================================
-var Database = {};
+Database = {};
 
 /**
- * Create a new Database Table
- * @param table     - The Table name
- * @param fields    - The closure for Table fields
- * @return The Database object
- * @throws DatabaseTableError, if the parameters are not defined
- * @throws TableExistsError, if the table exists
+ * Create a Database Table
+ * 
+ * @param {string} table The Table name
+ * @param {function} fields The closure of Table Fields
+ * @throws {TableExistsError} If the Table exists already
  */
 Database.create = function( table, fields ) {
-	if( !table || (typeof table !== "string") )
-		throw new TableCreateError;
-	if( !fields || (typeof fields !== "function") )
-		throw new TableCreateError;
-	
 	// Check if Table exists
-	if( $SHEET.getSheetByName( table )!==null )
+	if( $SS.getSheetByName( table )!==null )
 		throw new TableExistsError( table );
 	
 	// Create a new Table
-	table = new Table( table );
-	fields( table );
+	table = new Table( table ); fields( table );
 };
 
 /**
  * Drop a Database Table
- * @param table     - The Table name
- * @throws TableNotFoundError, if the Table doesn't exists
+ * 
+ * @param {string} table The Table name
+ * @throws {TableNotFoundError} If the Table does not exists
  */
 Database.drop = function( table ) {
-	var sheet = $SHEET.getSheetByName(table);
+	// Check if Table exists
+	var sheet = $SS.getSheetByName(table);
 	if( !sheet )
 		throw new TableNotFoundError( table );
 	
-	$SHEET.deleteSheet( sheet );
+	// Drop Table
+	$SS.deleteSheet( sheet );
 };
 
 /**
- * Get or update Database Table
- * @param table     - The Table name
- * @param fields    - The closure for Table fields
- * @throws TableIntegrityError, if the parameters are not defined
+ * Get a Database Table
+ * 
+ * @param {string} table The Table name
+ * @return {Table} The Table object. Useful for chaining.
+ * @throws {TableNotFoundError} If the Table does not exists
  */
-Database.table = function( table, fields ) {
-	if( !table || (typeof table !== "string") )
-		throw new TableIntegrityError( "Table parameters are invalid" );
-	
+Database.table = function( table ) {
 	// Check if Table exists
-	if( $SHEET.getSheetByName( table )===null )
+	if( $SS.getSheetByName( table )===null )
 		throw new TableNotFoundError( table );
-	table = new Table(table);
 	
-	// Update table fields
-	if( fields && (typeof fields === "function") )
-		fields(table);
-	else
-		return table;
+	return new Table(table);
 };

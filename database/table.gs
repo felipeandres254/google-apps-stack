@@ -2,139 +2,92 @@
 //  TABLE FUNCTIONS
 // ==================================================
 /**
- * Define the Table constructor
- * @param table     - The Table name
- * @property sheet     - The sheet representing the Table
- * @property fields    - The Table fields
- * @property $DATA     - The Table data
- * @property data      - The current query data
- * @throws TableCreateError, if the table is not defined
+ * Represents a Database Table
+ * 
+ * @constructor
+ * @param {string} name The Table name
  */
-function Table( table ) {
-	if( !table || (typeof table !== "string") )
-		throw new TableCreateError;
-	
-	// Create or get, and format sheet
-	if( $SHEET.getSheetByName( table )===null ) {
-		this.sheet = $SHEET.insertSheet( table );
+function Table( name ) {
+	// Create and format sheet, if does not exists
+	if( $SS.getSheetByName( name )===null ) {
+		this.sheet = $SS.insertSheet( name );
 		this.sheet.deleteRows(2, this.sheet.getMaxRows()-2);
 		this.sheet.deleteColumns(2, this.sheet.getMaxColumns()-1);
 		this.sheet.setRowHeight(1, 25).setRowHeight(2, 25).setColumnWidth(1, 150);
 		
 		this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns()).setFontWeight("bold");
-		this.sheet.getRange(1, 1, 2, this.sheet.getMaxColumns()).setHorizontalAlignment("left").setVerticalAlignment("middle").setNumberFormat("@");
+		this.sheet.getRange(1, 1, 2, this.sheet.getMaxColumns()).setNumberFormat("@");
+		this.sheet.getRange(1, 1, 2, this.sheet.getMaxColumns()).setHorizontalAlignment("left").setVerticalAlignment("middle");
 		this.sheet.setFrozenRows(1);
 	}
-	this.sheet = $SHEET.getSheetByName( table );
+	this.sheet = $SS.getSheetByName( name );
 	
 	// Get Table Fields
-	var headers = this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns());
-	this.fields = headers.getValues()[0].reduce(function(fields, field, idx) {
-		var notes = headers.getNotes()[0][idx].split("\n");
-		fields[field] = {
-			"index":idx,
-			"type":notes[0].split(",")[0],
-			"length":notes[0].split(",").length>1 ? parseInt(notes[0].split(",")[1], 10) : null,
-			"tags":notes.length>1 ? notes[1].split(",") : []
-		};
-		return fields;
-	}, {});
-	this.fields._ = headers;
+	this.fields = {"_":this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns())};
+	this.fields._.getValues()[0].forEach(function(field) {
+		if( field!=="" )
+			this.fields[field] = Field.read(this, field);
+	}, this);
 	
 	// Get Table data
 	this.$DATA = this.sheet.getRange(2, 1, this.sheet.getMaxRows()-1, this.sheet.getMaxColumns()).getValues();
 	this.$DATA = this.$DATA.map(function(row) {
-		Logger.log( row );
 		if( row.some(function(value) { return value!==""; }) ) {
-			return headers.getValues()[0].reduce(function(data, field, idx) {
+			return this.fields._.getValues()[0].reduce(function(data, field, idx) {
 				data[field] = row[idx]; return data;
 			}, {});
 		} else { return null; }
-	}).filter(function(row) { return row!==null; });
+	}, this).filter(function(row) { return row!==null; });
 	
-	// Clone Table data to represent current query
-	this.data  = this.$DATA.slice(0);
+	// Clone Table data (current query data)
+	this.data = this.$DATA.slice(0);
 }
 
 /**
- * Add a new Field
- * @param name      - The Field name
- * @param tags      - The Field tags
- * @return The Table object
- * @throws TableIntegrityError, if there is a Field with the same name
- */
-Table.prototype.add_field = function( name, tags ) {
-	if( Object.keys(this.fields).indexOf(name)!==-1 )
-		throw new TableIntegrityError("Field '" + name + "' exists already");
-	
-	if( this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns()).getValues()[0][0]!="" )
-		this.sheet.insertColumnAfter(this.sheet.getMaxColumns());
-	var range = this.sheet.getRange(1, this.sheet.getMaxColumns(), 1, 1);
-	range.setValues([[name]]).setNotes([[tags.join("\n")]]);
-	
-	// Create the Field
-	this.fields[name] = {
-		"index":this.sheet.getMaxColumns()-1,
-		"type":tags[0].split(",")[0],
-		"length":tags[0].split(",").length>1 ? parseInt(tags[0].split(",")[1], 10) : null,
-		"tags":tags.splice(1)
-	};
-	this.fields._ = this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns());
-	
-	return this;
-};
-
-/**
- * Add tag to the last Field
- * @param tag       - The tag to add
- */
-Table.prototype.add_tag = function( tag ) {
-	var idx  = this.sheet.getMaxColumns()-1;
-	var tags = this.fields._.getNotes()[0][idx].split("\n");
-	if( tags.length==1 )
-		tags.push( tag );
-	else if( !(new RegExp(tag)).test(tags[tags.length-1]) )
-		tags[tags.length-1] += "," + tag;
-	this.sheet.getRange(1, idx+1, 1, 1).setNotes([[tags.join("\n")]]);
-};
-
-// ==================================================
-//  TABLE FIELD FUNCTIONS
-// ==================================================
-/**
  * Add a new Primary Key Field
- * @param name      - The Field name
- * @throws TableIntegrityError, if there is a Primary Key already
+ * 
+ * @param {string} name The Field name
+ * @throws {TableIntegrityError} If there is a Primary Key already
  */
 Table.prototype.primary = function( name ) {
-	var fields = this.fields._.getValues()[0];
-	if( fields.some(function(field) { return this.fields[field].tags.indexOf("primary")!=-1; }, this) )
+	// Check for Primary Key
+	var fields = this.fields._.getValues()[0].filter(function(field) { return field!==""; });
+	if( fields.some(function(field) { return this.fields[field].attrs.indexOf("primary")!=-1; }, this) )
 		throw new TableIntegrityError("Table has a Primary Key already");
-	this.add_field(name, ["hex,10", "primary"]);
+	
+	this.fields[name] = (new Field(name, "hex", ["primary"], 10, this)).write();
 };
 
 /**
- * Add the unique tag to the last Field
+ * Add the 'unique' attribute to a Field
+ * 
+ * @param {string=} name The Field name
  */
-Table.prototype.unique = function() {
-	this.add_tag("unique");
+Table.prototype.unique = function( name ) {
+	name = name || this.fields._.getValues()[0][this.fields._.getValues()[0].length-1];
+	this.fields[name] = this.fields[name].attr("unique");
 };
 
 /**
- * Add the nullable tag to the last Field
+ * Add the 'nullable' attribute to a Field
+ * 
+ * @param {string=} name The Field name
  */
-Table.prototype.nullable = function() {
-	this.add_tag("nullable");
+Table.prototype.nullable = function( name ) {
+	name = name || this.fields._.getValues()[0][this.fields._.getValues()[0].length-1];
+	this.fields[name] = this.fields[name].attr("nullable");
 };
 
 /**
  * Add a new String Field
- * @param name      - The Field name
- * @param length    - Optional. The Field length
- * @return The Table object
+ * 
+ * @param {string} name The Field name
+ * @param {number=} length The Field length
+ * @return {Table} The Table object. Useful for chaining.
  */
 Table.prototype.string = function( name, length ) {
-	return this.add_field(name, ["string" + (length===parseInt(length, 10) ? ","+length : "")]);
+	this.fields[name] = (new Field(name, "string", [], length || null, this)).write();
+	return this;
 };
 
 // ==================================================
@@ -142,25 +95,14 @@ Table.prototype.string = function( name, length ) {
 // ==================================================
 /**
  * Filter the current Table data
- * @param field     - The Field to test
- * @param compare   - The compare operator
- * @param value     - The value to compare against or RegEx tester
- * @return The Table object
- * @thows FieldNotFoundError, if header does not exist in table
- * @thows InvalidOperatorError, if compare is not a valid operator
- * @thows InvalidRegexError, if compare is '~=' and value is not a valid RegEx object
+ * 
+ * @param {string} field The Field name to compare
+ * @param {string} compare The compare operator. One of "<", "<=", ">=", ">", "=", "!=" or "~="
+ * @param {string|RegExp} value The value to compare against
+ * @return {Table} The Table object. Useful for chaining.
  */
 Table.prototype.where = function( field, compare, value ) {
-	// Check parameters
-	if( Object.keys(this.fields).indexOf(field)==-1 )
-		throw new FieldNotFoundError( field, this.table );
-	if( ["<", "<=", "=", "!=", "~=", ">=", ">"].indexOf(compare)==-1 )
-		throw new InvalidOperatorError( compare, ["<", "<=", "=", "!=", "~=", ">=", ">"] );
-	if( compare=="~=" && value.constructor!==RegExp )
-		throw new InvalidRegexError( value );
-
-	// Filter data
-	var value = ( (typeof value === "undefined") || (value===null) ) ? "" : value.toString();
+	value = ( (typeof value === "undefined") || (value===null) ) ? "" : value.toString();
 	this.data = this.data.filter(function(row) {
 		var data = ( (typeof row[field] === "undefined") || (row[field]===null) ) ? "" : row[field].toString();
 		if( compare=="~=" )
@@ -176,6 +118,8 @@ Table.prototype.where = function( field, compare, value ) {
 
 /**
  * Get the current Table data
+ * 
+ * @return {Array} this.data
  */
 Table.prototype.get = function() {
 	return this.data;
@@ -183,6 +127,8 @@ Table.prototype.get = function() {
 
 /**
  * Get all the Table data
+ * 
+ * @return {Array} this.$DATA
  */
 Table.prototype.all = function() {
 	return this.$DATA;
@@ -190,17 +136,22 @@ Table.prototype.all = function() {
 
 /**
  * Insert a new Table row
- * @param data      - The row data
+ * 
+ * @param {Object} data The row data
+ * @throws {InvalidRowError} If any of the Fields is invalid
  */
 Table.prototype.insert = function( data ) {
-	// Map data to Field names array
+	// Map data to Field values array
 	data = this.fields._.getValues()[0].map(function(field) {
-		if( (typeof data[field] === "undefined") || (data[field]===null) )
+		if( !this.fields[field].validate(data[field]) )
 			return null;
-		return data[field].toString();
-	});
+		return data[field] ? data[field].toString() : "";
+	}, this);
 	
-	// Prepend Field names array
+	if( data.some(function(field) { field===null; }) )
+		throw new TableInvalidRowError;
+	
+	// Prepend Field values array
 	if( this.$DATA.length>0 )
 		this.sheet.insertRowBefore(2);
 	this.sheet.getRange(2, 1, 1, this.sheet.getMaxColumns()).setValues([data]);
@@ -208,39 +159,47 @@ Table.prototype.insert = function( data ) {
 
 /**
  * Update the current Table data
- * @param data      - The row data
- * @throws TableIntegrityError, if there is a Primary Key already
+ * 
+ * @param {Object} data The row data
+ * @throws {TableIntegrityError} If data contains the Primary Key and Table has row with the same
  */
 Table.prototype.update = function( data ) {
-	var primary; this.fields._.getValues()[0].some(function(field) {
-		if( this.fields[field].tags.indexOf("primary")!=-1 ) {
-			primary = field; return true;
-		}
+	var uniques = []; this.fields._.getValues()[0].forEach(function(field) {
+		if( this.fields[field].attrs.indexOf("primary")!=-1 )
+			uniques = [field].concat(uniques);
+		if( this.fields[field].attrs.indexOf("unique")!=-1 )
+			uniques.push(field);
 	}, this);
-	if( (typeof data[primary] !== "undefined") && (data[primary]!==null) )
-		throw new TableIntegrityError("Can't update Primary Key value");
+	uniques.forEach(function(field) {
+		if( data[field] && this.data.length==1 && !this.fields[field].validate(data[field]) )
+			throw new TableIntegrityError("Primary Key or unique value already exists in Table data");
+		if( data[field] && this.data.length>1 )
+			delete data[field];
+	}, this);
 	
 	this.data.forEach(function(row) {
-		// Map data to Field names array
+		// Map data to Field values array
 		var values = this.fields._.getValues()[0].map(function(field) {
 			if( (typeof data[field] === "undefined") || (data[field]===null) ) {
 				if( (typeof row[field] === "undefined") || (row[field]===null) )
 					return "";
 				else
 					return row[field].toString();
+			} else {
+				if( !this.fields[field].validate(data[field]) )
+					throw new FieldValueError( field, data[field] );
+				return data[field].toString();
 			}
-			if( this.fields[field].length!==null && data[field].length!==this.fields[field].length )
-				throw new TableFieldError(field, "Field length is invalid");
-			return (field===primary ? row[field] : data[field]).toString();
 		}, this);
 		
-		// Write row to table
-		var index; Database.table(this.sheet.getName()).$DATA.some(function(value, idx) {
-			if( value[primary]===row[primary] ) {
-				index = idx; return true;
+		// Write row to Table
+		var idx; Database.table(this.sheet.getName()).$DATA.some(function(value, i) {
+			if( value[uniques[0]]===row[uniques[0]] ) {
+				idx = i; return true;
 			}
 		});
-		this.sheet.getRange(index + 2, 1, 1, values.length).setValues([values]);
+		if( idx===parseInt(idx, 10) )
+			this.sheet.getRange(idx + 2, 1, 1, values.length).setValues([values]);
 	}, this);
 };
 
@@ -248,58 +207,62 @@ Table.prototype.update = function( data ) {
  * Remove the current Table data
  */
 Table.prototype.remove = function() {
+	// Get the name of the Primary Key Field
 	var primary; this.fields._.getValues()[0].some(function(field) {
-		if( this.fields[field].tags.indexOf("primary")!=-1 ) {
+		if( this.fields[field].attrs.indexOf("primary")!=-1 ) {
 			primary = field; return true;
 		}
 	}, this);
 	
 	this.data.forEach(function(row) {
-		var index; Database.table(this.sheet.getName()).$DATA.some(function(value, idx) {
+		// Get the row index
+		var idx; Database.table(this.sheet.getName()).$DATA.some(function(value, i) {
 			if( value[primary]===row[primary] ) {
-				index = idx; return true;
+				idx = i; return true;
 			}
 		});
+		
+		// Remove the row from the Table
 		if( this.sheet.getMaxRows()==2 )
-			this.sheet.getRange(index + 2, 1, 1, this.sheet.getMaxColumns()).clearContent();
+			this.sheet.getRange(idx + 2, 1, 1, this.sheet.getMaxColumns()).clearContent();
 		else
-			this.sheet.deleteRow(index + 2);
+			this.sheet.deleteRow(idx + 2);
 	}, this);
 };
 
 // ==================================================
 //  TABLE ERRORS
 // ==================================================
-function TableCreateError() {
-	this.name     = "TableCreateError";
-	this.message  = "Table parameters are invalid";
-	this.stack    = (new Error).stack;
-}
-TableCreateError.prototype = Object.create(Error.prototype);
-TableCreateError.prototype.constructor = TableCreateError;
-
 function TableExistsError( table ) {
-	this.name     = "TableExistsError";
-	this.table    = table;
-	this.message  = "The table '" + table + "' already exists";
-	this.stack    = (new Error).stack;
+	this.name    = "TableExistsError";
+	this.table   = table;
+	this.message = "The Table '" + table + "' exists already";
+	this.stack   = (new Error).stack;
 }
 TableExistsError.prototype = Object.create(Error.prototype);
 TableExistsError.prototype.constructor = TableExistsError;
 
 function TableNotFoundError( table ) {
-	this.name     = "TableNotFoundError";
-	this.table    = table;
-	this.message  = "The table '" + table + "' does not exist";
-	this.stack    = (new Error).stack;
+	this.name    = "TableNotFoundError";
+	this.table   = table;
+	this.message = "The Table '" + table + "' does not exist";
+	this.stack   = (new Error).stack;
 }
 TableNotFoundError.prototype = Object.create(Error.prototype);
 TableNotFoundError.prototype.constructor = TableNotFoundError;
 
 function TableIntegrityError( message ) {
-	this.name     = "TableIntegrityError";
-	this.message  = message;
-	this.stack    = (new Error).stack;
+	this.name    = "TableIntegrityError";
+	this.message = message;
+	this.stack   = (new Error).stack;
 }
 TableIntegrityError.prototype = Object.create(Error.prototype);
 TableIntegrityError.prototype.constructor = TableIntegrityError;
+
+function TableInvalidRowError() {
+	this.name    = "TableInvalidRowError";
+	this.message = "Can't insert invalid row to Table";
+	this.stack   = (new Error).stack;
+}
+TableInvalidRowError.prototype = Object.create(Error.prototype);
+TableInvalidRowError.prototype.constructor = TableInvalidRowError;
