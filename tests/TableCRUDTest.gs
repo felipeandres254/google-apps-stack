@@ -65,28 +65,18 @@ function TableCRUDTest() {
 	
 	unit.add("Update row with errors", function() {
 		try {
-			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"id":"aaaaaaaaaa"});
-		} catch( error ) {
-			this.assertTrue(error instanceof TableIntegrityError);
-			this.assertEquals(error.message, "Can't update Primary Key value");
-		}
-		this.assertEquals(Database.table("test_table").get()[1].id, "da39a3ee5e");
-		
-		try {
 			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string":null});
 		} catch( error ) {
-			this.assertTrue(error instanceof TableFieldError);
+			this.assertTrue(error instanceof FieldValueError);
 			this.assertEquals(error.field, "test_string");
-			this.assertEquals(error.message, "Field value is invalid");
 		}
 		this.assertEquals(Database.table("test_table").get()[1].test_string, "aaaaaaaaaa");
 		
 		try {
 			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string_length":"abc"});
 		} catch( error ) {
-			this.assertTrue(error instanceof TableFieldError);
+			this.assertTrue(error instanceof FieldValueError);
 			this.assertEquals(error.field, "test_string_length");
-			this.assertEquals(error.message, "Field length is invalid");
 		}
 		this.assertEquals(Database.table("test_table").get()[1].test_string_length, "abcdefghijklmno");
 	});
