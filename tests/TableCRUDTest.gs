@@ -2,7 +2,7 @@ function TableCRUDTest() {
 	// Create Unit Test
 	var unit = new UnitTest("Table CRUD");
 	unit.setup = function() {
-		if( $SHEET.getSheetByName("test_table")!==null )
+		if( $SS.getSheetByName("test_table")!==null )
 			Database.drop("test_table");
 		Database.create("test_table", function(table) {
 			table.primary("id");
@@ -11,7 +11,7 @@ function TableCRUDTest() {
 			table.string("test_string_unique").unique();
 			table.string("test_string_nullable").nullable();
 		});
-		var sheet = $SHEET.getSheetByName("test_table");
+		var sheet = $SS.getSheetByName("test_table");
 		sheet.getRange(2, 1, 1, sheet.getMaxColumns()).setValues([["da39a3ee5e", "test", "abcdefghijklmno", "unique", null]]);
 	};
 	unit.close = function() {
@@ -65,28 +65,18 @@ function TableCRUDTest() {
 	
 	unit.add("Update row with errors", function() {
 		try {
-			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"id":"aaaaaaaaaa"});
-		} catch( error ) {
-			this.assertTrue(error instanceof TableIntegrityError);
-			this.assertEquals(error.message, "Can't update Primary Key value");
-		}
-		this.assertEquals(Database.table("test_table").get()[1].id, "da39a3ee5e");
-		
-		try {
 			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string":null});
 		} catch( error ) {
-			this.assertTrue(error instanceof TableFieldError);
+			this.assertEquals(error.constructor, FieldValueError);
 			this.assertEquals(error.field, "test_string");
-			this.assertEquals(error.message, "Field value is invalid");
 		}
 		this.assertEquals(Database.table("test_table").get()[1].test_string, "aaaaaaaaaa");
 		
 		try {
 			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string_length":"abc"});
 		} catch( error ) {
-			this.assertTrue(error instanceof TableFieldError);
+			this.assertEquals(error.constructor, FieldValueError);
 			this.assertEquals(error.field, "test_string_length");
-			this.assertEquals(error.message, "Field length is invalid");
 		}
 		this.assertEquals(Database.table("test_table").get()[1].test_string_length, "abcdefghijklmno");
 	});

@@ -50,7 +50,7 @@ function UnitTest( unit_name ) {
 			html += "<span><b>" + this.name + "</b> " + (this.result.message ? this.result.message : "") + "</span>";
 			if( this.result.outcome=="ERROR" ) {
 				html += "<pre><b>" + this.result.error.name + "</b> " + this.result.error.message;
-				html += "<br>" + this.result.error.stack.replace(/\n/g, "<br>").replace(/\t/g, "  ") + "</pre>";
+				html += "<br>" + (this.result.error.stack ? this.result.error.stack.replace(/\n/g, "<br>").replace(/\t/g, "  ") : "") + "</pre>";
 			}
 			return html + "</li>";
 		};
@@ -59,6 +59,7 @@ function UnitTest( unit_name ) {
 	this.name   = unit_name;
 	this.tests  = [];
 	this.tested = false;
+	
 	/**
 	 * Adds a new Test
 	 * @param name      - The Test name
