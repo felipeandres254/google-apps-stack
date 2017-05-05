@@ -26,7 +26,7 @@ function TableFieldsTest() {
 				table.primary("test_primary_2");
 			});
 		} catch( error ) {
-			this.assertTrue(error instanceof TableIntegrityError);
+			this.assertEquals(error.constructor, TableIntegrityError);
 			this.assertEquals(error.message, "Table has a Primary Key already");
 		}
 		Database.drop("test_table");
@@ -56,7 +56,7 @@ function TableFieldsTest() {
 				table.string("test_string");
 			});
 		} catch( error ) {
-			this.assertTrue(error instanceof TableIntegrityError);
+			this.assertEquals(error.constructor, TableIntegrityError);
 			this.assertEquals(error.message, "Table has a Field with the same name");
 		}
 		Database.drop("test_table");

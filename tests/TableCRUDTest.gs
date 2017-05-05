@@ -67,7 +67,7 @@ function TableCRUDTest() {
 		try {
 			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string":null});
 		} catch( error ) {
-			this.assertTrue(error instanceof FieldValueError);
+			this.assertEquals(error.constructor, FieldValueError);
 			this.assertEquals(error.field, "test_string");
 		}
 		this.assertEquals(Database.table("test_table").get()[1].test_string, "aaaaaaaaaa");
@@ -75,7 +75,7 @@ function TableCRUDTest() {
 		try {
 			Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string_length":"abc"});
 		} catch( error ) {
-			this.assertTrue(error instanceof FieldValueError);
+			this.assertEquals(error.constructor, FieldValueError);
 			this.assertEquals(error.field, "test_string_length");
 		}
 		this.assertEquals(Database.table("test_table").get()[1].test_string_length, "abcdefghijklmno");
