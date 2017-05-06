@@ -233,36 +233,36 @@ Table.prototype.remove = function() {
 // ==================================================
 //  TABLE ERRORS
 // ==================================================
-function TableExistsError( table ) {
+TableExistsError = function( table ) {
 	this.name    = "TableExistsError";
 	this.table   = table;
 	this.message = "The Table '" + table + "' exists already";
 	this.stack   = (new Error).stack;
-}
+};
 TableExistsError.prototype = Object.create(Error.prototype);
 TableExistsError.prototype.constructor = TableExistsError;
 
-function TableNotFoundError( table ) {
+TableNotFoundError = function( table ) {
 	this.name    = "TableNotFoundError";
 	this.table   = table;
 	this.message = "The Table '" + table + "' does not exist";
 	this.stack   = (new Error).stack;
-}
+};
 TableNotFoundError.prototype = Object.create(Error.prototype);
 TableNotFoundError.prototype.constructor = TableNotFoundError;
 
-function TableIntegrityError( message ) {
+TableIntegrityError = function( message ) {
 	this.name    = "TableIntegrityError";
 	this.message = message;
 	this.stack   = (new Error).stack;
-}
+};
 TableIntegrityError.prototype = Object.create(Error.prototype);
 TableIntegrityError.prototype.constructor = TableIntegrityError;
 
-function TableInvalidRowError() {
+TableInvalidRowError = function() {
 	this.name    = "TableInvalidRowError";
 	this.message = "Can't insert invalid row to Table";
 	this.stack   = (new Error).stack;
-}
+};
 TableInvalidRowError.prototype = Object.create(Error.prototype);
 TableInvalidRowError.prototype.constructor = TableInvalidRowError;

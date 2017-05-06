@@ -143,37 +143,37 @@ Field.prototype.validate = function( value ) {
 // ==================================================
 //  FIELD ERRORS
 // ==================================================
-function FieldReadError() {
+FieldReadError = function() {
 	this.name    = "FieldReadError";
 	this.message = "Can't read Field from Table";
 	this.stack   = (new Error).stack;
-}
+};
 FieldReadError.prototype = Object.create(Error.prototype);
 FieldReadError.prototype.constructor = FieldReadError;
 
-function FieldWriteError() {
+FieldWriteError = function() {
 	this.name    = "FieldWriteError";
 	this.message = "Can't write Field to Table";
 	this.stack   = (new Error).stack;
-}
+};
 FieldWriteError.prototype = Object.create(Error.prototype);
 FieldWriteError.prototype.constructor = FieldWriteError;
 
-function FieldValueError( field, value ) {
+FieldValueError = function( field, value ) {
 	this.name    = "FieldValueError";
 	this.field   = field;
 	this.value   = value;
 	this.message = "Field value '" + value + "' is invalid for '" + field + "'";
 	this.stack   = (new Error).stack;
-}
+};
 FieldValueError.prototype = Object.create(Error.prototype);
 FieldValueError.prototype.constructor = FieldValueError;
 
-function FieldValidationError( type ) {
+FieldValidationError = function( type ) {
 	this.name    = "FieldValidationError";
 	this.type    = type;
 	this.message = "There is no validation rule for '" + type + "'";
 	this.stack   = (new Error).stack;
-}
+};
 FieldValidationError.prototype = Object.create(Error.prototype);
 FieldValidationError.prototype.constructor = FieldValidationError;
