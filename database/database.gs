@@ -22,7 +22,7 @@ Database.create = function( table, fields ) {
 		throw new TableExistsError( table );
 	
 	// Create a new Table
-	table = new Table( table ); fields( table );
+	fields( new Table(table) );
 };
 
 /**
