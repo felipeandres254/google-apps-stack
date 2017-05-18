@@ -1,7 +1,23 @@
 // ==================================================
+//  CONFIGURATION
+// ==================================================
+/**
+ * Read configuration from Script Properties
+ * @const {object}
+ */
+$CONFIG = PropertiesService.getScriptProperties().getProperties();
+Object.keys($CONFIG).forEach(function(key) {
+	key.split(".").forEach(function(part, idx) {
+		if( !eval("$CONFIG." + key.split(".").splice(0, idx+1).join(".")) )
+			eval("$CONFIG." + key.split(".").splice(0, idx+1).join(".") + " = {}")
+	});
+	eval("$CONFIG." + key + " = " + $CONFIG[key]); delete $CONFIG[key];
+});
+
+// ==================================================
 //  PARENT SPREADSHEET
 // ==================================================
-/** @const {Spreadsheet} */
+/** @const {Spreadsheet} **/
 $SS = SpreadsheetApp.getActiveSpreadsheet();
 
 // ==================================================
