@@ -148,7 +148,7 @@ Table.prototype.insert = function( data ) {
 		if( !this.fields[field].validate(data[field]) )
 			return null;
 		return data[field] ? data[field].toString() : "";
-	});
+	}, this);
 	
 	if( data.some(function(field) { field===null; }) )
 		throw new TableInvalidRowError;
