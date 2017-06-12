@@ -6,7 +6,8 @@ function ModelCRUDTest() {
 			Database.drop("test_table");
 	};
 	unit.close = function() {
-		Database.drop("test_table");
+		if( $SS.getSheetByName("test_table")!==null )
+			Database.drop("test_table");
 	};
 	
 	// Add Tests
@@ -24,7 +25,7 @@ function ModelCRUDTest() {
 			table.string("email").unique();
 		});
 		
-		this.assertEquals($SS.getSheetByName("test_table"), null);
+		this.assertNotEquals($SS.getSheetByName("test_table"), null);
 	});
 	
 	unit.add("Save new model", function() {
