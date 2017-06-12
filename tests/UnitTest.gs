@@ -88,7 +88,7 @@ function UnitTest( unit_name ) {
 //  RUN TESTS MAIN FUNCTION
 // ==================================================
 function RunTests() {
-	var tests = [TableCreateDropTest, TableFieldsTest, TableCRUDTest];
+	var tests = [TableCreateDropTest, TableFieldsTest, TableCRUDTest, ModelCRUDTest];
 	tests = tests.map(function(unit) { return unit(); });
 	
 	var css = [
