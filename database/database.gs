@@ -15,10 +15,13 @@ Object.keys($CONFIG).forEach(function(key) {
 });
 
 // ==================================================
-//  PARENT SPREADSHEET
+//  GOOGLE DRIVE CONNECTIONS
 // ==================================================
 /** @const {Spreadsheet} **/
-$SS = SpreadsheetApp.getActiveSpreadsheet();
+$SS = $CONFIG.database ? SpreadsheetApp.openById($CONFIG.database.main) : SpreadsheetApp.getActiveSpreadsheet();
+
+/** @const {Folder} **/
+$ROOT = DriveApp.getFileById(ScriptApp.getScriptId()).getParents().next();
 
 // ==================================================
 //  DATABASE FUNCTIONS
