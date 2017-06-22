@@ -46,3 +46,23 @@ Utils.template = function( route ) {
 		return "";
 	return HtmlService.createTemplate(files.next().getBlob()).evaluate().getContent();
 };
+
+/**
+ * Send an email from the Script owner account
+ * 
+ * @param {object} data The email data as described in https://developers.google.com/apps-script/reference/mail/mail-app
+ * @param {object=} data.inner_style The header and inline CSS for the body container
+ */
+Utils.mail = function( data ) {
+	var html = UrlFetchApp.fetch($CONFIG.data.email_template_url).getContentText();
+	
+	if( data.inner_style ) {
+		Object.keys(data.inner_style).forEach(function(style) {
+			html = html.replace(".inner { ", ".inner { " + style.header);
+			html = html.replace("inner contents\" style=\"", "inner contents\" style=\"" + style.inline);
+		});
+		delete data.inner_style;
+	}
+	data.htmlBody = html.replace("<!-- EMAIL_BODY -->", data.htmlBody);
+	MailApp.sendEmail( data );
+};
