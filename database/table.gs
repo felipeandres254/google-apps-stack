@@ -89,17 +89,56 @@ Table.prototype.nullable = function( name ) {
 	this.fields[name] = this.fields[name].attr("nullable");
 };
 
-/**
- * Add a new String Field
- * 
- * @param {string} name The Field name
- * @param {number=} length The Field length
- * @return {Table} The Table object. Useful for chaining.
- */
-Table.prototype.string = function( name, length ) {
-	this.fields[name] = (new Field(name, "string", [], length || null, this)).write();
-	return this;
-};
+// STRING FIELD DEFINITIONS
+(function() {
+	/**
+	 * Define the following Field types
+	 * string   => Any character
+	 * hex      => Only hexadecimal characters  ('0' to '9' and 'a' to 'f')
+	 * num      => Only numeric characters      ('0' to '9')
+	 * alpha    => Only alphabetic characters   ('a' to 'z')
+	 * alphanum => Only alphanumeric characters ('0' to '9' and 'a' to 'z')
+	 */
+	["string", "hex", "num", "alpha", "alphanum"].forEach(function(type) {
+		/**
+		 * Add a new Field of type
+		 * 
+		 * @param {string} name The Field name
+		 * @param {number=} length The Field length
+		 * @return {Table} The Table object. Useful for chaining.
+		 */
+		Table.prototype[type] = function( name, length ) {
+			this.fields[name] = (new Field(name, type, [], length || null, this)).write();
+			return this;
+		};
+	});
+})();
+
+// SPECIAL FIELD DEFINITIONS
+(function() {
+	/**
+	 * Define the following Field types
+	 * email    => An email        (user@example.com)
+	 * datetime => A date and time (yyyy-mm-dd hh:ii:ss)
+	 * date     => A date          (yyyy-mm-dd)
+	 * time     => A time          (hh:ii:ss)
+	 * boolean  => A boolean       (true or false)
+	 * int      => An integer      (±d)
+	 * float    => A float         (±d.d)
+	 */
+	["email", "datetime", "date", "time", "boolean", "int", "float"].forEach(function(type) {
+		/**
+		 * Add a new Field of type
+		 * 
+		 * @param {string} name The Field name
+		 * @return {Table} The Table object. Useful for chaining.
+		 */
+		Table.prototype[type] = function( name ) {
+			this.fields[name] = (new Field(name, type, [], null, this)).write();
+			return this;
+		};
+	});
+})();
 
 // ==================================================
 //  TABLE CRUD FUNCTIONS
