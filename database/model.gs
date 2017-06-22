@@ -63,6 +63,15 @@ Model.prototype.count = function() {
 };
 
 /**
+ * Get the current Models
+ * 
+ * @return {Array} The Model objects
+ */
+Model.prototype.get = function() {
+	return this.constructor.prototype.table.get().map(function(m) { return new this.constructor(m); }, this);
+};
+
+/**
  * Filter the current Models
  * 
  * @param {string} field The Field name to compare
