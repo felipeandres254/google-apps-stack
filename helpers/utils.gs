@@ -32,7 +32,7 @@ Utils.lock = function( callable, params ) {
  * @param {string} route The route to the file, relative to the $ROOT folder
  * @return {string} The evaluated template
  */
-Utils.template( route ) {
+Utils.template = function( route ) {
 	var folder = DriveApp.getFolderById($ROOT.getId());
 	route.split("/").slice(0, -1).forEach(function(f) {
 		var folders = folder ? folder.getFoldersByName(f) : null;
@@ -45,4 +45,4 @@ Utils.template( route ) {
 	if( !files.hasNext() )
 		return "";
 	return HtmlService.createTemplate(files.next().getBlob()).evaluate().getContent();
-}
+};
