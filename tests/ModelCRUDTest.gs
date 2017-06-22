@@ -23,6 +23,7 @@ function ModelCRUDTest() {
 		Model.init(TestModel, function(table) {
 			table.primary("id");
 			table.string("email").unique();
+			table.datetime("deleted").nullable();
 		});
 		
 		this.assertNotEquals($SS.getSheetByName("test_table"), null);
