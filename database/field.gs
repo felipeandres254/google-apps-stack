@@ -104,7 +104,7 @@ Field.prototype.attr = function( attr ) {
  * @throws {FieldValidationError} If there is no validation rule for the Field type
  */
 Field.prototype.validate = function( value ) {
-	if( value===null  )
+	if( value===null || (value!==undefined && value==="") )
 		return this.attrs.indexOf("nullable")!=-1;
 	if( !value )
 		return false;

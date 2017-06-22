@@ -169,19 +169,19 @@ Table.prototype.where = function( field, compare, value ) {
 /**
  * Get the current Table data
  * 
- * @return {Array} this.data
+ * @return {Array} A clone of this.data
  */
 Table.prototype.get = function() {
-	return this.data;
+	return this.data.slice(0);
 };
 
 /**
  * Get all the Table data
  * 
- * @return {Array} this.$DATA
+ * @return {Array} A clone of this.$DATA
  */
 Table.prototype.all = function() {
-	return this.$DATA;
+	return this.$DATA.slice(0);
 };
 
 /**
@@ -252,8 +252,10 @@ Table.prototype.update = function( data ) {
 					idx = i; return true;
 				}
 			});
-			if( idx===parseInt(idx, 10) )
+			if( idx===parseInt(idx, 10) ) {
 				table.sheet.getRange(idx + 2, 1, 1, values.length).setValues([values]);
+				table.$DATA = Database.table(table.sheet.getName()).$DATA.slice(0);
+			}
 		}, this);
 	}, this);
 };
@@ -279,6 +281,7 @@ Table.prototype.remove = function() {
 				table.sheet.getRange(idx + 2, 1, 1, table.sheet.getMaxColumns()).clearContent();
 			else
 				table.sheet.deleteRow(idx + 2);
+			table.$DATA = Database.table(table.sheet.getName()).$DATA.slice(0);
 		}, this);
 	}, this);
 };
