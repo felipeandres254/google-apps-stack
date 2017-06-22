@@ -46,17 +46,26 @@ function Table( name ) {
 }
 
 /**
- * Add a new Primary Key Field
+ * Add a Primary Key Field or get the existing one
  * 
- * @param {string} name The Field name
+ * @param {string=} name The Field name
+ * @return {string=} If name is not supplied, return the Primary Key name
  * @throws {TableIntegrityError} If there is a Primary Key already
  */
 Table.prototype.primary = function( name ) {
-	// Check for Primary Key
-	var fields = this.fields._.getValues()[0].filter(function(field) { return field!==""; });
-	if( fields.some(function(field) { return this.fields[field].attrs.indexOf("primary")!=-1; }, this) )
-		throw new TableIntegrityError("Table has a Primary Key already");
+	var primary; this.fields._.getValues()[0].some(function(field) {
+		if( this.fields[field] && this.fields[field].attrs.indexOf("primary")!==-1 ) {
+			if( name )
+				throw new TableIntegrityError("Table has a Primary Key already");
+			primary = field; return true;
+		}
+	}, this);
 	
+	// Get the Primary Key name
+	if( !name )
+		return primary;
+	
+	// Set the Primary Key field
 	this.fields[name] = (new Field(name, "hex", ["primary"], 10, this)).write();
 };
 
@@ -144,20 +153,21 @@ Table.prototype.all = function() {
  */
 Table.prototype.insert = function( data ) {
 	// Map data to Field values array
-	data = this.fields._.getValues()[0].map(function(field) {
+	var row = this.fields._.getValues()[0].map(function(field) {
 		if( !this.fields[field].validate(data[field]) )
 			return null;
 		return data[field] ? data[field].toString() : "";
 	}, this);
 	
-	if( data.some(function(field) { field===null; }) )
+	if( row.some(function(field) { field===null; }) )
 		throw new TableInvalidRowError;
 		
 	// Prepend Field values array
 	Utils.lock(function(table) {
 		if( table.$DATA.length>0 )
 			table.sheet.insertRowBefore(2);
-		table.sheet.getRange(2, 1, 1, table.sheet.getMaxColumns()).setValues([data]);
+		table.sheet.getRange(2, 1, 1, table.sheet.getMaxColumns()).setValues([row]);
+		table.$DATA.push(data);
 	}, this);
 };
 
@@ -214,11 +224,7 @@ Table.prototype.update = function( data ) {
  */
 Table.prototype.remove = function() {
 	// Get the name of the Primary Key Field
-	var primary; this.fields._.getValues()[0].some(function(field) {
-		if( this.fields[field].attrs.indexOf("primary")!=-1 ) {
-			primary = field; return true;
-		}
-	}, this);
+	var primary = this.primary();
 	
 	this.data.forEach(function(row) {
 		Utils.lock(function(table) {
