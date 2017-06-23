@@ -58,14 +58,18 @@ Field.prototype.write = function() {
 		throw new TableIntegrityError("Table has a Field with the same name");
 	
 	// Write to Table Sheet
-	if( this.table.sheet.getRange(1, 1, 1, this.table.sheet.getMaxColumns()).getValues()[0][0]!="" )
-		this.table.sheet.insertColumnAfter(this.table.sheet.getMaxColumns());
-	var range = this.table.sheet.getRange(1, this.table.sheet.getMaxColumns(), 1, 1);
-	var notes = this.type + (this.length ? (","+this.length) : "") + (this.attrs.length>0 ? ("\n"+this.attrs.join("\n")) : "");
-	range.setValues([[this.name]]).setNotes([[notes]]);
-	
-	this.table.fields._ = this.table.sheet.getRange(1, 1, 1, this.table.sheet.getMaxColumns());
-	return this;
+	return Utils.lock(function(params) {
+		if( params.field.table.sheet.getRange(1, 1, 1, params.field.table.sheet.getMaxColumns()).getValues()[0][0]!="" )
+			params.field.table.sheet.insertColumnAfter(params.field.table.sheet.getMaxColumns());
+		var range = params.field.table.sheet.getRange(1, params.field.table.sheet.getMaxColumns(), 1, 1);
+		var notes = params.field.type +
+			(params.field.length ? (","+params.field.length) : "") +
+			(params.field.attrs.length>0 ? ("\n"+params.field.attrs.join("\n")) : "");
+		range.setValues([[params.field.name]]).setNotes([[notes]]);
+		
+		params.field.table.fields._ = params.field.table.sheet.getRange(1, 1, 1, params.field.table.sheet.getMaxColumns());
+		return params.field;
+	}, {"field":this});
 };
 
 /**
@@ -76,16 +80,20 @@ Field.prototype.write = function() {
  * @throws {FieldWriteError} If there is no parent Table
  */
 Field.prototype.attr = function( attr ) {
-	// Check if Field has attribute already
-	if( this.attrs.indexOf(attr)==-1 ) {
-		this.attrs.push( attr ); this.attrs.sort();
-		var idx   = this.table.fields._.getValues()[0].indexOf(this.name);
-		var notes = this.type + (this.length ? (","+this.length) : "") + (this.attrs.length>0 ? ("\n"+this.attrs.join("\n")) : "");
-		this.table.sheet.getRange(1, idx+1, 1, 1).setNotes([[notes]]);
-	}
-	
-	this.table.fields._ = this.table.sheet.getRange(1, 1, 1, this.table.sheet.getMaxColumns());
-	return this;
+	return Utils.lock(function(params) {
+		// Check if Field has attribute already
+		if( params.field.attrs.indexOf(attr)==-1 ) {
+			params.field.attrs.push( attr ); params.field.attrs.sort();
+			var idx   = params.field.table.fields._.getValues()[0].indexOf(params.field.name);
+			var notes = params.field.type +
+				(params.field.length ? (","+params.field.length) : "") +
+				(params.field.attrs.length>0 ? ("\n"+params.field.attrs.join("\n")) : "");
+			params.field.table.sheet.getRange(1, idx+1, 1, 1).setNotes([[notes]]);
+		}
+		
+		params.field.table.fields._ = params.field.table.sheet.getRange(1, 1, 1, params.field.table.sheet.getMaxColumns());
+		return params.field;
+	}, {"field":this});
 };
 
 /**

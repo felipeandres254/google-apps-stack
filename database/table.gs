@@ -10,15 +10,17 @@
 function Table( name ) {
 	// Create and format sheet, if does not exists
 	if( $SS.getSheetByName( name )===null ) {
-		this.sheet = $SS.insertSheet( name );
-		this.sheet.deleteRows(2, this.sheet.getMaxRows()-2);
-		this.sheet.deleteColumns(2, this.sheet.getMaxColumns()-1);
-		this.sheet.setRowHeight(1, 25).setRowHeight(2, 25).setColumnWidth(1, 150);
-		
-		this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns()).setFontWeight("bold");
-		this.sheet.getRange(1, 1, 2, this.sheet.getMaxColumns()).setNumberFormat("@");
-		this.sheet.getRange(1, 1, 2, this.sheet.getMaxColumns()).setHorizontalAlignment("left").setVerticalAlignment("middle");
-		this.sheet.setFrozenRows(1);
+		Utils.lock(function() {
+			var sheet = $SS.insertSheet( name );
+			sheet.deleteRows(2, sheet.getMaxRows()-2);
+			sheet.deleteColumns(2, sheet.getMaxColumns()-1);
+			sheet.setRowHeight(1, 25).setRowHeight(2, 25).setColumnWidth(1, 150);
+			
+			sheet.getRange(1, 1, 1, sheet.getMaxColumns()).setFontWeight("bold");
+			sheet.getRange(1, 1, 2, sheet.getMaxColumns())
+				.setNumberFormat("@").setHorizontalAlignment("left").setVerticalAlignment("middle");
+			sheet.setFrozenRows(1);
+		});
 	}
 	this.sheet = $SS.getSheetByName( name );
 	
@@ -138,7 +140,7 @@ Table.prototype.all = function() {
  * Insert a new Table row
  * 
  * @param {Object} data The row data
- * @throws {InvalidRowError} If any of the Fields is invalid
+ * @throws {TableInvalidRowError} If any of the Fields is invalid
  */
 Table.prototype.insert = function( data ) {
 	// Map data to Field values array
@@ -150,11 +152,13 @@ Table.prototype.insert = function( data ) {
 	
 	if( data.some(function(field) { field===null; }) )
 		throw new TableInvalidRowError;
-	
+		
 	// Prepend Field values array
-	if( this.$DATA.length>0 )
-		this.sheet.insertRowBefore(2);
-	this.sheet.getRange(2, 1, 1, this.sheet.getMaxColumns()).setValues([data]);
+	Utils.lock(function(table) {
+		if( table.$DATA.length>0 )
+			table.sheet.insertRowBefore(2);
+		table.sheet.getRange(2, 1, 1, table.sheet.getMaxColumns()).setValues([data]);
+	}, this);
 };
 
 /**
@@ -193,13 +197,15 @@ Table.prototype.update = function( data ) {
 		}, this);
 		
 		// Write row to Table
-		var idx; Database.table(this.sheet.getName()).$DATA.some(function(value, i) {
-			if( value[uniques[0]]===row[uniques[0]] ) {
-				idx = i; return true;
-			}
-		});
-		if( idx===parseInt(idx, 10) )
-			this.sheet.getRange(idx + 2, 1, 1, values.length).setValues([values]);
+		Utils.lock(function(table) {
+			var idx; Database.table(table.sheet.getName()).$DATA.some(function(value, i) {
+				if( value[uniques[0]]===row[uniques[0]] ) {
+					idx = i; return true;
+				}
+			});
+			if( idx===parseInt(idx, 10) )
+				table.sheet.getRange(idx + 2, 1, 1, values.length).setValues([values]);
+		}, this);
 	}, this);
 };
 
@@ -215,18 +221,20 @@ Table.prototype.remove = function() {
 	}, this);
 	
 	this.data.forEach(function(row) {
-		// Get the row index
-		var idx; Database.table(this.sheet.getName()).$DATA.some(function(value, i) {
-			if( value[primary]===row[primary] ) {
-				idx = i; return true;
-			}
-		});
-		
-		// Remove the row from the Table
-		if( this.sheet.getMaxRows()==2 )
-			this.sheet.getRange(idx + 2, 1, 1, this.sheet.getMaxColumns()).clearContent();
-		else
-			this.sheet.deleteRow(idx + 2);
+		Utils.lock(function(table) {
+			// Get the row index
+			var idx; Database.table(table.sheet.getName()).$DATA.some(function(value, i) {
+				if( value[primary]===row[primary] ) {
+					idx = i; return true;
+				}
+			});
+			
+			// Remove the row from the Table
+			if( table.sheet.getMaxRows()==2 )
+				table.sheet.getRange(idx + 2, 1, 1, table.sheet.getMaxColumns()).clearContent();
+			else
+				table.sheet.deleteRow(idx + 2);
+		}, this);
 	}, this);
 };
 
