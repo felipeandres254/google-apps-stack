@@ -57,10 +57,8 @@ Utils.mail = function( data ) {
 	var html = UrlFetchApp.fetch($CONFIG.data.email_template_url).getContentText();
 	
 	if( data.inner_style ) {
-		Object.keys(data.inner_style).forEach(function(style) {
-			html = html.replace(".inner { ", ".inner { " + style.header);
-			html = html.replace("inner contents\" style=\"", "inner contents\" style=\"" + style.inline);
-		});
+		html = html.replace(".inner { ", ".inner { " + data.inner_style.header);
+		html = html.replace("inner contents\" style=\"", "inner contents\" style=\"" + data.inner_style.inline);
 		delete data.inner_style;
 	}
 	data.htmlBody = html.replace("<!-- EMAIL_BODY -->", data.htmlBody);
