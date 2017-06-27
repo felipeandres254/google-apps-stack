@@ -156,13 +156,13 @@ Table.prototype.where = function( field, compare, value ) {
 	this.data = this.data.filter(function(row) {
 		var data = ( (typeof row[field] === "undefined") || (row[field]===null) ) ? "" : row[field].toString();
 		if( compare=="~=" )
-			return eval(value + ".test('" + data + "')" );
+			return eval(value + ".test('" + data + "')");
 		else if( compare!="=" )
-			return eval("'" + data + "'" + compare + "'" + value + "'" );
+			return eval("'" + data + "'" + compare + "'" + value + "'");
 		else
 			return data===value;
 	});
-
+	
 	return this;
 };
 
