@@ -50,6 +50,28 @@ function ModelCRUDTest() {
 		this.assertEquals(rows[0].email, "test@test.com");
 	});
 	
+	unit.add("Update existing model", function() {
+		function TestModel( data ) {
+			this.table = "test_table";
+			
+			// Call superclass constructor
+			Model.call(this, data);
+		}
+		Model.init(TestModel, function(table) { /* table */ });
+		
+		var rows;
+		rows = Database.table("test_table").get();
+		this.assertEquals(rows.length, 1);
+		
+		var model = TestModel.where("email", "=", "test@test.com").get()[0];
+		model.email = "test2@test.com";
+		model.save();
+		
+		rows = Database.table("test_table").get();
+		this.assertEquals(rows.length, 1);
+		this.assertEquals(rows[0].email, "test2@test.com");
+	});
+	
 	unit.add("Read models", function() {
 		function TestModel( data ) {
 			this.table = "test_table";
