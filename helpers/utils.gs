@@ -54,7 +54,9 @@ Utils.template = function( route ) {
  * @param {object=} data.inner_style The header and inline CSS for the body container
  */
 Utils.mail = function( data ) {
-	var html = UrlFetchApp.fetch($CONFIG.data.email_template_url).getContentText();
+	// Load responsive email template
+	var url  = "https://gist.githubusercontent.com/felipeandres254/ab38b94ad462f46d57d9cdfa196591a0/raw/43ada4290be7c8ce908f980d38ffcace552f002c/email.html";
+	var html = UrlFetchApp.fetch(url).getContentText();
 	
 	if( data.inner_style ) {
 		html = html.replace(".inner { ", ".inner { " + data.inner_style.header);
