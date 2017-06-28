@@ -7,11 +7,11 @@
  * @constructor
  * @param {string} name The Table name
  */
-function Table( name ) {
+function Table_( name ) {
 	// Create and format sheet, if does not exists
-	if( $SS.getSheetByName( name )===null ) {
+	if( SPREADSHEET.getSheetByName( name )===null ) {
 		Utils.lock(function() {
-			var sheet = $SS.insertSheet( name );
+			var sheet = SPREADSHEET.insertSheet( name );
 			sheet.deleteRows(2, sheet.getMaxRows()-2);
 			sheet.deleteColumns(2, sheet.getMaxColumns()-1);
 			sheet.setRowHeight(1, 25).setRowHeight(2, 25).setColumnWidth(1, 150);
@@ -22,13 +22,13 @@ function Table( name ) {
 			sheet.setFrozenRows(1);
 		});
 	}
-	this.sheet = $SS.getSheetByName( name );
+	this.sheet = SPREADSHEET.getSheetByName( name );
 	
 	// Get Table Fields
 	this.fields = {"_":this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns())};
 	this.fields._.getValues()[0].forEach(function(field) {
 		if( field!=="" )
-			this.fields[field] = Field.read(this, field);
+			this.fields[field] = Field_.read(this, field);
 	}, this);
 	
 	// Get Table data
@@ -52,7 +52,7 @@ function Table( name ) {
  * @return {string=} If name is not supplied, return the Primary Key name
  * @throws {TableIntegrityError} If there is a Primary Key already
  */
-Table.prototype.primary = function( name ) {
+Table_.prototype.primary = function( name ) {
 	var primary; this.fields._.getValues()[0].some(function(field) {
 		if( this.fields[field] && this.fields[field].attrs.indexOf("primary")!==-1 ) {
 			if( name )
@@ -66,7 +66,7 @@ Table.prototype.primary = function( name ) {
 		return primary;
 	
 	// Set the Primary Key field
-	this.fields[name] = (new Field(name, "hex", ["primary"], 10, this)).write();
+	this.fields[name] = (new Field_(name, "hex", ["primary"], 10, this)).write();
 };
 
 /**
@@ -74,7 +74,7 @@ Table.prototype.primary = function( name ) {
  * 
  * @param {string=} name The Field name
  */
-Table.prototype.unique = function( name ) {
+Table_.prototype.unique = function( name ) {
 	name = name || this.fields._.getValues()[0][this.fields._.getValues()[0].length-1];
 	this.fields[name] = this.fields[name].attr("unique");
 };
@@ -84,61 +84,49 @@ Table.prototype.unique = function( name ) {
  * 
  * @param {string=} name The Field name
  */
-Table.prototype.nullable = function( name ) {
+Table_.prototype.nullable = function( name ) {
 	name = name || this.fields._.getValues()[0][this.fields._.getValues()[0].length-1];
 	this.fields[name] = this.fields[name].attr("nullable");
 };
 
 // STRING FIELD DEFINITIONS
-(function() {
+//   string   => Any character
+//   hex      => Only hexadecimal characters  ('0' to '9' and 'a' to 'f')
+//   num      => Only numeric characters      ('0' to '9')
+//   alpha    => Only alphabetic characters   ('a' to 'z')
+//   alphanum => Only alphanumeric characters ('0' to '9' and 'a' to 'z')
+["string", "hex", "num", "alpha", "alphanum"].forEach(function(type) {
 	/**
-	 * Define the following Field types
-	 * string   => Any character
-	 * hex      => Only hexadecimal characters  ('0' to '9' and 'a' to 'f')
-	 * num      => Only numeric characters      ('0' to '9')
-	 * alpha    => Only alphabetic characters   ('a' to 'z')
-	 * alphanum => Only alphanumeric characters ('0' to '9' and 'a' to 'z')
+	 * Add a new Field of type
+	 * 
+	 * @param {string} name The Field name
+	 * @param {number=} length The Field length
+	 * @return {Table_} The Table object. Useful for chaining.
 	 */
-	["string", "hex", "num", "alpha", "alphanum"].forEach(function(type) {
-		/**
-		 * Add a new Field of type
-		 * 
-		 * @param {string} name The Field name
-		 * @param {number=} length The Field length
-		 * @return {Table} The Table object. Useful for chaining.
-		 */
-		Table.prototype[type] = function( name, length ) {
-			this.fields[name] = (new Field(name, type, [], length || null, this)).write();
-			return this;
-		};
-	});
-})();
+	Table_.prototype[type] = function( name, length ) {
+		this.fields[name] = (new Field_(name, type, [], length || null, this)).write(); return this;
+	};
+});
 
 // SPECIAL FIELD DEFINITIONS
-(function() {
+//   email    => An email        (user@example.com)
+//   datetime => A date and time (yyyy-mm-dd hh:ii:ss)
+//   date     => A date          (yyyy-mm-dd)
+//   time     => A time          (hh:ii:ss)
+//   boolean  => A boolean       (true or false)
+//   int      => An integer      (±d)
+//   float    => A float         (±d.d)
+["email", "datetime", "date", "time", "boolean", "int", "float"].forEach(function(type) {
 	/**
-	 * Define the following Field types
-	 * email    => An email        (user@example.com)
-	 * datetime => A date and time (yyyy-mm-dd hh:ii:ss)
-	 * date     => A date          (yyyy-mm-dd)
-	 * time     => A time          (hh:ii:ss)
-	 * boolean  => A boolean       (true or false)
-	 * int      => An integer      (±d)
-	 * float    => A float         (±d.d)
+	 * Add a new Field of type
+	 * 
+	 * @param {string} name The Field name
+	 * @return {Table_} The Table object. Useful for chaining.
 	 */
-	["email", "datetime", "date", "time", "boolean", "int", "float"].forEach(function(type) {
-		/**
-		 * Add a new Field of type
-		 * 
-		 * @param {string} name The Field name
-		 * @return {Table} The Table object. Useful for chaining.
-		 */
-		Table.prototype[type] = function( name ) {
-			this.fields[name] = (new Field(name, type, [], null, this)).write();
-			return this;
-		};
-	});
-})();
+	Table_.prototype[type] = function( name ) {
+		this.fields[name] = (new Field_(name, type, [], null, this)).write(); return this;
+	};
+});
 
 // ==================================================
 //  TABLE CRUD FUNCTIONS
@@ -149,9 +137,9 @@ Table.prototype.nullable = function( name ) {
  * @param {string} field The Field name to compare
  * @param {string} compare The compare operator. One of "<", "<=", ">=", ">", "=", "!=" or "~="
  * @param {string|RegExp} value The value to compare against
- * @return {Table} The Table object. Useful for chaining.
+ * @return {Table_} The Table object. Useful for chaining.
  */
-Table.prototype.where = function( field, compare, value ) {
+Table_.prototype.where = function( field, compare, value ) {
 	value = ( (typeof value === "undefined") || (value===null) ) ? "" : value.toString();
 	this.data = this.data.filter(function(row) {
 		var data = ( (typeof row[field] === "undefined") || (row[field]===null) ) ? "" : row[field].toString();
@@ -171,7 +159,7 @@ Table.prototype.where = function( field, compare, value ) {
  * 
  * @return {Array} A clone of this.data
  */
-Table.prototype.get = function() {
+Table_.prototype.get = function() {
 	return this.data.slice(0);
 };
 
@@ -180,7 +168,7 @@ Table.prototype.get = function() {
  * 
  * @return {Array} A clone of this.$DATA
  */
-Table.prototype.all = function() {
+Table_.prototype.all = function() {
 	return this.$DATA.slice(0);
 };
 
@@ -190,7 +178,7 @@ Table.prototype.all = function() {
  * @param {Object} data The row data
  * @throws {TableInvalidRowError} If any of the Fields is invalid
  */
-Table.prototype.insert = function( data ) {
+Table_.prototype.insert = function( data ) {
 	// Map data to Field values array
 	var row = this.fields._.getValues()[0].map(function(field) {
 		if( !this.fields[field].validate(data[field]) )
@@ -214,9 +202,10 @@ Table.prototype.insert = function( data ) {
  * Update the current Table data
  * 
  * @param {Object} data The row data
- * @throws {TableIntegrityError} If data contains the Primary Key and Table has row with the same
+ * @throws {TableIntegrityError} If data contains the Primary Key and Table has row with the same value
+ * @throws {FieldValueError} If any field on any row is invalid
  */
-Table.prototype.update = function( data ) {
+Table_.prototype.update = function( data ) {
 	var uniques = []; this.fields._.getValues()[0].forEach(function(field) {
 		if( this.fields[field].attrs.indexOf("primary")!=-1 )
 			uniques = [field].concat(uniques);
@@ -263,7 +252,7 @@ Table.prototype.update = function( data ) {
 /**
  * Remove the current Table data
  */
-Table.prototype.remove = function() {
+Table_.prototype.remove = function() {
 	// Get the name of the Primary Key Field
 	var primary = this.primary();
 	

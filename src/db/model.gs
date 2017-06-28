@@ -37,18 +37,18 @@ Model.init = function( model, fields ) {
 	
 	// Extend static methods
 	model.count = function() {
-		model.prototype.table.data = model.prototype.table.$DATA.slice(0);
+		model.prototype.table.data = model.prototype.table.all();
 		if( model.prototype.table.fields.deleted )
 			return model.prototype.table.where("deleted", "=", "").get().length;
 		else
 			return model.prototype.table.get().length;
 	};
 	model.where = function(a, b, c) {
-		model.prototype.table.data = model.prototype.table.$DATA.slice(0);
+		model.prototype.table.data = model.prototype.table.all();
 		return (new model).where(a, b, c);
 	};
 	model.removed = function() {
-		model.prototype.table.data = model.prototype.table.$DATA.slice(0);
+		model.prototype.table.data = model.prototype.table.all();
 		return model.prototype.table.fields.deleted ? model.where("deleted", "!=", "") : model;
 	};
 };
@@ -80,8 +80,7 @@ Model.prototype.get = function() {
  * @return {Model} The Model object. Useful for chaining.
  */
 Model.prototype.where = function( field, compare, value ) {
-	this.constructor.prototype.table = this.constructor.prototype.table.where(field, compare, value);
-	return this;
+	this.constructor.prototype.table = this.constructor.prototype.table.where(field, compare, value); return this;
 };
 
 /**
@@ -112,7 +111,7 @@ Model.prototype.remove = function( forced ) {
 	var date = (new Date).toISOString().substr(0, 19).replace("T", " ");
 	
 	if( forced || !this.constructor.prototype.table.fields.deleted ) {
-		// Remove Model from Database
+		// Remove Model(s) from Database
 		this.constructor.prototype.table.remove();
 	} else {
 		// Soft-delete the current Model(s)

@@ -9,9 +9,9 @@
  * @param {string} type The Field type
  * @param {string[]=} attrs The Field attributes
  * @param {number=} length The Field length
- * @param {Table=} table The parent Table
+ * @param {Table_=} table The parent Table
  */
-function Field( name, type, attrs, length, table ) {
+function Field_( name, type, attrs, length, table ) {
 	this.name  = name;
 	this.type  = type;
 	this.attrs = attrs || []; this.attrs.sort();
@@ -23,12 +23,12 @@ function Field( name, type, attrs, length, table ) {
 /**
  * Read a Field from the given Table
  * 
- * @param {Table} table The Table to read from
+ * @param {Table_} table The Table to read from
  * @param {string} name The Field name
- * @return {Field} The Field object
+ * @return {Field_} The Field object
  * @throws {FieldReadError} If there is no Field with the given name
  */
-Field.read = function( table, name ) {
+Field_.read = function( table, name ) {
 	// Check if Field exists
 	var idx = table.fields._.getValues()[0].indexOf(name);
 	if( idx==-1 )
@@ -39,7 +39,7 @@ Field.read = function( table, name ) {
 	var length = note.split("\n")[0].indexOf(",")==-1 ? null : parseInt(note.split("\n")[0].split(",")[1], 10);
 	var attrs = note.indexOf("\n")==-1 ? [] : note.split("\n")[1].split(",");
 	
-	return new Field(name, type, attrs, length, table);
+	return new Field_(name, type, attrs, length, table);
 };
 
 /**
@@ -49,7 +49,7 @@ Field.read = function( table, name ) {
  * @throws {FieldWriteError} If there is no parent Table
  * @throws {TableIntegrityError} If there is a Field with the same name
  */
-Field.prototype.write = function() {
+Field_.prototype.write = function() {
 	if( !this.table )
 		throw new FieldWriteError;
 	
@@ -79,7 +79,7 @@ Field.prototype.write = function() {
  * @return {Field} The Field object
  * @throws {FieldWriteError} If there is no parent Table
  */
-Field.prototype.attr = function( attr ) {
+Field_.prototype.attr = function( attr ) {
 	return Utils.lock(function(params) {
 		// Check if Field has attribute already
 		if( params.field.attrs.indexOf(attr)==-1 ) {
@@ -103,7 +103,7 @@ Field.prototype.attr = function( attr ) {
  * @return {boolean} True, if Field value is valid. False, otherwise.
  * @throws {FieldValidationError} If there is no validation rule for the Field type
  */
-Field.prototype.validate = function( value ) {
+Field_.prototype.validate = function( value ) {
 	if( value===null || (value!==undefined && value==="") )
 		return this.attrs.indexOf("nullable")!=-1;
 	if( !value )
