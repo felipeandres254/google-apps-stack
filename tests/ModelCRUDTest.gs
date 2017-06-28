@@ -64,7 +64,7 @@ function ModelCRUDTest() {
 		this.assertEquals(rows.length, 1);
 		
 		var model = TestModel.where("email", "=", "test@test.com").get()[0];
-		model.email = "test2@test.com";
+		model.data.email = "test2@test.com";
 		model.save();
 		
 		rows = Database.table("test_table").get();
