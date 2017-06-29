@@ -17,7 +17,7 @@ function ModelEventsTest() {
 	};
 	
 	// Add Tests
-	unit.add("Creating event flow", function() {
+	unit.add("Create event flow", function() {
 		this.assertEquals(gscript.SPREADSHEET.getSheetByName("test_table"), null);
 		
 		function TestModel( data ) {
@@ -30,17 +30,17 @@ function ModelEventsTest() {
 			table.primary("id");
 			table.string("email").unique();
 		});
-		TestModel.prototype.saving = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"saving"});
+		TestModel.prototype.before_save = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"before_save"});
 		};
-		TestModel.prototype.creating = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"creating"});
+		TestModel.prototype.before_create = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"before_create"});
 		};
-		TestModel.prototype.created = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"created"});
+		TestModel.prototype.after_create = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"after_create"});
 		};
-		TestModel.prototype.saved = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"saved"});
+		TestModel.prototype.after_save = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"after_save"});
 		};
 		
 		this.assertNotEquals(gscript.SPREADSHEET.getSheetByName("test_table"), null);
@@ -52,17 +52,17 @@ function ModelEventsTest() {
 		this.assertEquals(rows.length, 4);
 		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").get();
 		this.assertEquals(rows.length, 4);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "saving").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "before_save").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "creating").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "before_create").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "created").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "after_create").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "saved").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "after_save").get();
 		this.assertEquals(rows.length, 1);
 	});
 	
-	unit.add("Updating event flow", function() {
+	unit.add("Update event flow", function() {
 		function TestModel( data ) {
 			this.table = "test_table";
 			
@@ -70,17 +70,17 @@ function ModelEventsTest() {
 			gscript.Model.call(this, data);
 		}
 		gscript.Model.init(TestModel, function(table) { /* table */ });
-		TestModel.prototype.saving = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"saving"});
+		TestModel.prototype.before_save = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"before_save"});
 		};
-		TestModel.prototype.updating = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"updating"});
+		TestModel.prototype.before_update = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"before_update"});
 		};
-		TestModel.prototype.updated = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"updated"});
+		TestModel.prototype.after_update = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"after_update"});
 		};
-		TestModel.prototype.saved = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"saved"});
+		TestModel.prototype.after_save = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"after_save"});
 		};
 		
 		var model = TestModel.where("email", "=", "test@test.com").get()[0];
@@ -92,13 +92,13 @@ function ModelEventsTest() {
 		this.assertEquals(rows.length, 8);
 		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").get();
 		this.assertEquals(rows.length, 8);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "saving").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "before_save").get();
 		this.assertEquals(rows.length, 2);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "updating").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "before_update").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "updated").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "after_update").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "saved").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "after_save").get();
 		this.assertEquals(rows.length, 2);
 	});
 	
@@ -110,11 +110,11 @@ function ModelEventsTest() {
 			gscript.Model.call(this, data);
 		}
 		gscript.Model.init(TestModel, function(table) { /* table */ });
-		TestModel.prototype.removing = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"removing"});
+		TestModel.prototype.before_remove = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"before_remove"});
 		};
-		TestModel.prototype.removed = function() {
-			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"removed"});
+		TestModel.prototype.after_remove = function() {
+			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"after_remove"});
 		};
 		
 		TestModel.where("email", "~=", /^test2@/).remove(true);
@@ -125,14 +125,10 @@ function ModelEventsTest() {
 		this.assertEquals(rows.length, 10);
 		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").get();
 		this.assertEquals(rows.length, 10);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "saving").get();
-		this.assertEquals(rows.length, 2);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "removing").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "before_remove").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "removed").get();
+		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "after_remove").get();
 		this.assertEquals(rows.length, 1);
-		rows = gscript.Database.table("eventlogs").where("model", "=", "TestModel").where("type", "=", "saved").get();
-		this.assertEquals(rows.length, 2);
 	});
 	
 	// Run and return results
