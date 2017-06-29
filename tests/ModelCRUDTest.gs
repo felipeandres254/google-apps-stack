@@ -23,6 +23,7 @@ function ModelCRUDTest() {
 		gscript.Model.init(TestModel, function(table) {
 			table.primary("id");
 			table.string("email").unique();
+			table.string("test_field").nullable();
 			table.datetime("deleted").nullable();
 		});
 		
@@ -64,12 +65,12 @@ function ModelCRUDTest() {
 		this.assertEquals(rows.length, 1);
 		
 		var model = TestModel.where("email", "=", "test@test.com").get()[0];
-		model.email = "test2@test.com";
+		model.data.test_field = "test_value";
 		model.save();
 		
 		rows = gscript.Database.table("test_table").get();
 		this.assertEquals(rows.length, 1);
-		this.assertEquals(rows[0].email, "test2@test.com");
+		this.assertEquals(rows[0].test_field, "test_value");
 	});
 	
 	unit.add("Read models", function() {
