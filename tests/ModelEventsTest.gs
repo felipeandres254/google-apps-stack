@@ -29,6 +29,7 @@ function ModelEventsTest() {
 		gscript.Model.init(TestModel, function(table) {
 			table.primary("id");
 			table.string("email").unique();
+			table.string("test_field").nullable();
 		});
 		TestModel.prototype.before_save = function() {
 			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"before_save"});
@@ -84,7 +85,7 @@ function ModelEventsTest() {
 		};
 		
 		var model = TestModel.where("email", "=", "test@test.com").get()[0];
-		model.email = "test2@test.com";
+		model.data.test_field = "test_value";
 		model.save();
 		
 		var rows;
