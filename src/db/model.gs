@@ -98,7 +98,15 @@ Model.prototype.save = function() {
 		this.data[primary] = (this.constructor.name + " " + Date.now()).sha1().substr(0, 10);
 		this.constructor.prototype.table.insert(this.data);
 	} else {
-		// TODO
+		var value = this.data[primary];
+		this.constructor.prototype.table.data = this.constructor.prototype.table.all();
+		this.constructor.prototype.table.fields._.getValues()[0].forEach(function(field) {
+			var attrs = this.constructor.prototype.table.fields[field].attrs;
+			if( attrs.indexOf("primary")!==-1 || attrs.indexOf("unique")!==-1 )
+				delete this.data[field];
+		}, this);
+		var table = this.constructor.prototype.table.sheet.getName();
+		Database.table(table).where(primary, "=", value).update(this.data);
 	}
 };
 
