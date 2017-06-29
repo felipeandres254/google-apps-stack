@@ -62,6 +62,9 @@ Model.prototype.count = function() {
 	return this.constructor.prototype.table.get().length;
 };
 
+// ==================================================
+//  MODEL CRUD FUNCTIONS
+// ==================================================
 /**
  * Get the current Models
  * 
