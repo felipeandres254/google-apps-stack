@@ -17,7 +17,7 @@ function SchemaTest() {
 		});
 		var sheet = gscript.SPREADSHEET.getSheetByName("test_table"), cell;
 		
-		cell = sheet.getRange(1, sheet.getMaxColumns(), 1, 1);
+		cell = sheet.getRange(1, 1, 1, 1);
 		this.assertEquals(cell.getValues()[0][0], "test_primary");
 		this.assertEquals(cell.getNotes()[0][0], "hex,10\nprimary");
 		gscript.Database.drop("test_table");
@@ -40,14 +40,14 @@ function SchemaTest() {
 		gscript.Database.create("test_table", function(table) {
 			table.string("test_string");
 			table.string("test_string_length", 25);
-			table.string("test_hex");
-			table.string("test_hex_length", 20);
-			table.string("test_num");
-			table.string("test_num_length", 15);
-			table.string("test_alpha");
-			table.string("test_alpha_length", 10);
-			table.string("test_alphanum");
-			table.string("test_alphanum_length", 5);
+			table.hex("test_hex");
+			table.hex("test_hex_length", 20);
+			table.num("test_num");
+			table.num("test_num_length", 15);
+			table.alpha("test_alpha");
+			table.alpha("test_alpha_length", 10);
+			table.alphanum("test_alphanum");
+			table.alphanum("test_alphanum_length", 5);
 		});
 		var sheet = gscript.SPREADSHEET.getSheetByName("test_table"), cell;
 		
