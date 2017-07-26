@@ -1,26 +1,4 @@
 // ==================================================
-//  CONFIGURATION
-// ==================================================
-/**
- * Read configuration from Script Properties
- * @const {object}
- */
-$CONFIG = PropertiesService.getScriptProperties().getProperties();
-Object.keys($CONFIG).forEach(function(key) {
-	key.split(".").forEach(function(part, idx) {
-		if( !eval("$CONFIG." + key.split(".").splice(0, idx+1).join(".")) )
-			eval("$CONFIG." + key.split(".").splice(0, idx+1).join(".") + " = {}")
-	});
-	eval("$CONFIG." + key + " = " + $CONFIG[key]); delete $CONFIG[key];
-});
-
-// ==================================================
-//  PARENT SPREADSHEET
-// ==================================================
-/** @const {Spreadsheet} **/
-$SS = SpreadsheetApp.getActiveSpreadsheet();
-
-// ==================================================
 //  DATABASE FUNCTIONS
 // ==================================================
 Database = {};
@@ -34,11 +12,11 @@ Database = {};
  */
 Database.create = function( table, fields ) {
 	// Check if Table exists
-	if( $SS.getSheetByName( table )!==null )
+	if( SPREADSHEET.getSheetByName( table )!==null )
 		throw new TableExistsError( table );
 	
 	// Create a new Table
-	fields( new Table(table) );
+	fields( new Table_(table) );
 };
 
 /**
@@ -49,12 +27,12 @@ Database.create = function( table, fields ) {
  */
 Database.drop = function( table ) {
 	// Check if Table exists
-	var sheet = $SS.getSheetByName(table);
+	var sheet = SPREADSHEET.getSheetByName(table);
 	if( !sheet )
 		throw new TableNotFoundError( table );
 	
 	// Drop Table
-	$SS.deleteSheet( sheet );
+	SPREADSHEET.deleteSheet( sheet );
 };
 
 /**
@@ -66,8 +44,8 @@ Database.drop = function( table ) {
  */
 Database.table = function( table ) {
 	// Check if Table exists
-	if( $SS.getSheetByName( table )===null )
+	if( SPREADSHEET.getSheetByName( table )===null )
 		throw new TableNotFoundError( table );
 	
-	return new Table(table);
+	return new Table_(table);
 };
