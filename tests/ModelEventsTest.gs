@@ -118,7 +118,7 @@ function ModelEventsTest() {
 			gscript.Database.table("eventlogs").insert({"model":"TestModel", "type":"after_remove"});
 		};
 		
-		TestModel.where("email", "~=", /^test2@/).remove(true);
+		TestModel.where("email", "~=", /^test@/).remove(true);
 		this.assertEquals(TestModel.count(), 0);
 		
 		var rows;
