@@ -9,15 +9,15 @@
  * @param {string} type The Field type
  * @param {string[]=} attrs The Field attributes
  * @param {number=} length The Field length
- * @param {Table_=} table The parent Table
+ * @param {Schema=} schema The Field parent Schema
  */
-function Field_( name, type, attrs, length, table ) {
+function Field_( name, type, attrs, length, schema ) {
 	this.name  = name;
 	this.type  = type;
 	this.attrs = attrs || []; this.attrs.sort();
 	
 	if( length ) this.length = length;
-	if( table ) this.table = table;
+	if( schema ) this.schema = schema;
 }
 
 /**
@@ -39,62 +39,73 @@ Field_.read = function( table, name ) {
 	var length = note.split("\n")[0].indexOf(",")==-1 ? null : parseInt(note.split("\n")[0].split(",")[1], 10);
 	var attrs = note.indexOf("\n")==-1 ? [] : note.split("\n")[1].split(",");
 	
-	return new Field_(name, type, attrs, length, table);
+	return new Field_(name, type, attrs, length);
 };
 
 /**
  * Write the Field to a Table
  * 
- * @return {Field} The Field object
- * @throws {FieldWriteError} If there is no parent Table
+ * @return {Field_} The Field object
+ * @throws {FieldWriteError} If there is no Field Schema
  * @throws {TableIntegrityError} If there is a Field with the same name
  */
 Field_.prototype.write = function() {
-	if( !this.table )
+	if( !this.schema )
 		throw new FieldWriteError;
 	
 	// Check for Field name
-	if( Object.keys(this.table.fields).indexOf(this.name)!==-1 )
+	if( this.schema.has(this.name) )
 		throw new TableIntegrityError("Table has a Field with the same name");
 	
-	// Write to Table Sheet
-	return Utils.lock(function(params) {
-		if( params.field.table.sheet.getRange(1, 1, 1, params.field.table.sheet.getMaxColumns()).getValues()[0][0]!="" )
-			params.field.table.sheet.insertColumnAfter(params.field.table.sheet.getMaxColumns());
-		var range = params.field.table.sheet.getRange(1, params.field.table.sheet.getMaxColumns(), 1, 1);
-		var notes = params.field.type +
-			(params.field.length ? (","+params.field.length) : "") +
-			(params.field.attrs.length>0 ? ("\n"+params.field.attrs.join("\n")) : "");
-		range.setValues([[params.field.name]]).setNotes([[notes]]);
+	// Write to Schema Sheet
+	return Utils.lock(function(field) {
+		if( field.schema.sheet.getRange(1, field.schema.sheet.getMaxColumns(), 1, 1).getValues()[0][0]!=="" )
+			field.schema.sheet.insertColumnAfter(field.schema.sheet.getMaxColumns());
+		var range = field.schema.sheet.getRange(1, field.schema.sheet.getMaxColumns(), 1, 1);
+		var notes = field.type +
+			(field.length ? (","+field.length) : "") +
+			(field.attrs.length>0 ? ("\n"+field.attrs.join(",")) : "");
+		range.setValues([[field.name]]).setNotes([[notes]]);
 		
-		params.field.table.fields._ = params.field.table.sheet.getRange(1, 1, 1, params.field.table.sheet.getMaxColumns());
-		return params.field;
-	}, {"field":this});
+		return field;
+	}, this);
 };
 
 /**
  * Add attribute to the Field
  * 
  * @param {string} attr The attribute to add
- * @return {Field} The Field object
- * @throws {FieldWriteError} If there is no parent Table
+ * @throws {FieldWriteError} If there is no Field Schema
  */
 Field_.prototype.attr = function( attr ) {
-	return Utils.lock(function(params) {
-		// Check if Field has attribute already
-		if( params.field.attrs.indexOf(attr)==-1 ) {
-			params.field.attrs.push( attr ); params.field.attrs.sort();
-			var idx   = params.field.table.fields._.getValues()[0].indexOf(params.field.name);
-			var notes = params.field.type +
-				(params.field.length ? (","+params.field.length) : "") +
-				(params.field.attrs.length>0 ? ("\n"+params.field.attrs.join("\n")) : "");
-			params.field.table.sheet.getRange(1, idx+1, 1, 1).setNotes([[notes]]);
-		}
+	if( !this.schema )
+		throw new FieldWriteError;
+	if( this.attrs.indexOf(attr)!==-1 )
+		return;
+	
+	Utils.lock(function(params) {
+		params.field.schema.fields = params.field.schema.sheet.getRange(1, 1, 1, params.field.schema.sheet.getMaxColumns());
 		
-		params.field.table.fields._ = params.field.table.sheet.getRange(1, 1, 1, params.field.table.sheet.getMaxColumns());
-		return params.field;
-	}, {"field":this});
+		params.field.attrs.push(params.attr); params.field.attrs.sort();
+		var idx   = params.field.schema.fields.getValues()[0].indexOf(params.field.name);
+		var notes = params.field.type +
+			(params.field.length ? (","+params.field.length) : "") +
+			(params.field.attrs.length>0 ? ("\n"+params.field.attrs.join(",")) : "");
+		params.field.schema.sheet.getRange(1, idx+1, 1, 1).setNotes([[notes]]);
+		
+		params.field.schema.fields = params.field.schema.sheet.getRange(1, 1, 1, params.field.schema.sheet.getMaxColumns());
+	}, {"field":this, "attr":attr});
 };
+
+/**
+ * Add 'unique' attribute to the Field
+ */
+Field_.prototype.unique = function() { this.attr("unique"); };
+
+/**
+ * Add 'nullable' attribute to the Field
+ */
+Field_.prototype.nullable = function() { this.attr("nullable"); };
 
 /**
  * Validate the Field against a given value
@@ -105,7 +116,7 @@ Field_.prototype.attr = function( attr ) {
  */
 Field_.prototype.validate = function( value ) {
 	if( value===null || (value!==undefined && value==="") )
-		return this.attrs.indexOf("nullable")!=-1;
+		return this.attrs.indexOf("nullable")!==-1;
 	if( !value )
 		return false;
 	
@@ -153,7 +164,7 @@ Field_.prototype.validate = function( value ) {
 // ==================================================
 FieldReadError = function() {
 	this.name    = "FieldReadError";
-	this.message = "Can't read Field from Table";
+	this.message = "Can't read Field from Schema";
 	this.stack   = (new Error).stack;
 };
 FieldReadError.prototype = Object.create(Error.prototype);
@@ -161,7 +172,7 @@ FieldReadError.prototype.constructor = FieldReadError;
 
 FieldWriteError = function() {
 	this.name    = "FieldWriteError";
-	this.message = "Can't write Field to Table";
+	this.message = "Can't write Field to Schema";
 	this.stack   = (new Error).stack;
 };
 FieldWriteError.prototype = Object.create(Error.prototype);
