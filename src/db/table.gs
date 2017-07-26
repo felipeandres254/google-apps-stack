@@ -8,29 +8,40 @@
  * @param {string} name The Table name
  */
 function Table_( name ) {
-	// Create and format sheet, if does not exists
-	if( SPREADSHEET.getSheetByName( name )===null ) {
-		Utils.lock(function() {
-			var sheet = SPREADSHEET.insertSheet( name );
-			sheet.deleteRows(2, sheet.getMaxRows()-2);
-			sheet.deleteColumns(2, sheet.getMaxColumns()-1);
-			sheet.setRowHeight(1, 25).setRowHeight(2, 25).setColumnWidth(1, 150);
-			
-			sheet.getRange(1, 1, 1, sheet.getMaxColumns()).setFontWeight("bold");
-			sheet.getRange(1, 1, 2, sheet.getMaxColumns())
-				.setNumberFormat("@").setHorizontalAlignment("left").setVerticalAlignment("middle");
-			sheet.setFrozenRows(1);
-		});
-	}
-	this.sheet = SPREADSHEET.getSheetByName( name );
+	// Check if Table exists
+	if( SPREADSHEET.getSheetByName( name )===null )
+		throw new TableNotFoundError( name );
 	
 	// Get Table Fields
+	this.sheet = SPREADSHEET.getSheetByName( name );
 	this.fields = {"_":this.sheet.getRange(1, 1, 1, this.sheet.getMaxColumns())};
 	this.fields._.getValues()[0].forEach(function(field) {
 		if( field!=="" )
 			this.fields[field] = Field_.read(this, field);
 	}, this);
 	
+	// Get Table data and current query data
+	this.$DATA = []; this.data = []; this.reset();
+}
+
+/**
+ * Get the Primary Key Field name
+ * 
+ * @return {string} The Primary Key name
+ */
+Table_.prototype.primary = function() {
+	var primary; this.fields._.getValues()[0].some(function(field) {
+		if( this.fields[field] && this.fields[field].attrs.indexOf("primary")!==-1 ) {
+			primary = field; return true;
+		}
+	}, this);
+	return primary;
+};
+
+/**
+ * Reset the Table data and current query data
+ */
+Table_.prototype.reset = function() {
 	// Get Table data
 	this.$DATA = this.sheet.getRange(2, 1, this.sheet.getMaxRows()-1, this.sheet.getMaxColumns()).getValues();
 	this.$DATA = this.$DATA.map(function(row) {
@@ -40,93 +51,11 @@ function Table_( name ) {
 			}, {});
 		} else { return null; }
 	}, this).filter(function(row) { return row!==null; });
+	this.$DATA = this.$DATA.map(function(row, idx) { row.__index__ = idx; return row; });
 	
 	// Clone Table data (current query data)
 	this.data = this.$DATA.slice(0);
-}
-
-/**
- * Add a Primary Key Field or get the existing one
- * 
- * @param {string=} name The Field name
- * @return {string=} If name is not supplied, return the Primary Key name
- * @throws {TableIntegrityError} If there is a Primary Key already
- */
-Table_.prototype.primary = function( name ) {
-	var primary; this.fields._.getValues()[0].some(function(field) {
-		if( this.fields[field] && this.fields[field].attrs.indexOf("primary")!==-1 ) {
-			if( name )
-				throw new TableIntegrityError("Table has a Primary Key already");
-			primary = field; return true;
-		}
-	}, this);
-	
-	// Get the Primary Key name
-	if( !name )
-		return primary;
-	
-	// Set the Primary Key field
-	this.fields[name] = (new Field_(name, "hex", ["primary"], 10, this)).write();
 };
-
-/**
- * Add the 'unique' attribute to a Field
- * 
- * @param {string=} name The Field name
- */
-Table_.prototype.unique = function( name ) {
-	name = name || this.fields._.getValues()[0][this.fields._.getValues()[0].length-1];
-	this.fields[name] = this.fields[name].attr("unique");
-};
-
-/**
- * Add the 'nullable' attribute to a Field
- * 
- * @param {string=} name The Field name
- */
-Table_.prototype.nullable = function( name ) {
-	name = name || this.fields._.getValues()[0][this.fields._.getValues()[0].length-1];
-	this.fields[name] = this.fields[name].attr("nullable");
-};
-
-// STRING FIELD DEFINITIONS
-//   string   => Any character
-//   hex      => Only hexadecimal characters  ('0' to '9' and 'a' to 'f')
-//   num      => Only numeric characters      ('0' to '9')
-//   alpha    => Only alphabetic characters   ('a' to 'z')
-//   alphanum => Only alphanumeric characters ('0' to '9' and 'a' to 'z')
-["string", "hex", "num", "alpha", "alphanum"].forEach(function(type) {
-	/**
-	 * Add a new Field of type
-	 * 
-	 * @param {string} name The Field name
-	 * @param {number=} length The Field length
-	 * @return {Table_} The Table object. Useful for chaining.
-	 */
-	Table_.prototype[type] = function( name, length ) {
-		this.fields[name] = (new Field_(name, type, [], length || null, this)).write(); return this;
-	};
-});
-
-// SPECIAL FIELD DEFINITIONS
-//   email    => An email        (user@example.com)
-//   datetime => A date and time (yyyy-mm-dd hh:ii:ss)
-//   date     => A date          (yyyy-mm-dd)
-//   time     => A time          (hh:ii:ss)
-//   boolean  => A boolean       (true or false)
-//   int      => An integer      (±d)
-//   float    => A float         (±d.d)
-["email", "datetime", "date", "time", "boolean", "int", "float"].forEach(function(type) {
-	/**
-	 * Add a new Field of type
-	 * 
-	 * @param {string} name The Field name
-	 * @return {Table_} The Table object. Useful for chaining.
-	 */
-	Table_.prototype[type] = function( name ) {
-		this.fields[name] = (new Field_(name, type, [], null, this)).write(); return this;
-	};
-});
 
 // ==================================================
 //  TABLE CRUD FUNCTIONS
@@ -143,14 +72,13 @@ Table_.prototype.where = function( field, compare, value ) {
 	value = ( (typeof value === "undefined") || (value===null) ) ? "" : value.toString();
 	this.data = this.data.filter(function(row) {
 		var data = ( (typeof row[field] === "undefined") || (row[field]===null) ) ? "" : row[field].toString();
-		if( compare=="~=" )
+		if( compare==="~=" )
 			return eval(value + ".test('" + data + "')");
-		else if( compare!="=" )
+		else if( compare!=="=" )
 			return eval("'" + data + "'" + compare + "'" + value + "'");
 		else
 			return data===value;
 	});
-	
 	return this;
 };
 
@@ -160,7 +88,7 @@ Table_.prototype.where = function( field, compare, value ) {
  * @return {Array} A clone of this.data
  */
 Table_.prototype.get = function() {
-	return this.data.slice(0);
+	return this.data.slice(0).map(function(row) { delete row.__index__; return row; });
 };
 
 /**
@@ -169,7 +97,7 @@ Table_.prototype.get = function() {
  * @return {Array} A clone of this.$DATA
  */
 Table_.prototype.all = function() {
-	return this.$DATA.slice(0);
+	return this.$DATA.slice(0).map(function(row) { delete row.__index__; return row; });
 };
 
 /**
@@ -188,7 +116,7 @@ Table_.prototype.insert = function( data ) {
 	
 	if( row.some(function(field) { field===null; }) )
 		throw new TableInvalidRowError;
-		
+	
 	// Prepend Field values array
 	Utils.lock(function(table) {
 		if( table.$DATA.length>0 )
@@ -207,45 +135,38 @@ Table_.prototype.insert = function( data ) {
  */
 Table_.prototype.update = function( data ) {
 	var uniques = []; this.fields._.getValues()[0].forEach(function(field) {
-		if( this.fields[field].attrs.indexOf("primary")!=-1 )
+		if( this.fields[field].attrs.indexOf("primary")!==-1 )
 			uniques = [field].concat(uniques);
-		if( this.fields[field].attrs.indexOf("unique")!=-1 )
+		if( this.fields[field].attrs.indexOf("unique")!==-1 )
 			uniques.push(field);
 	}, this);
 	uniques.forEach(function(field) {
-		if( data[field] && this.data.length==1 && !this.fields[field].validate(data[field]) )
+		if( data[field] && this.data.length===1 && !this.fields[field].validate(data[field]) )
 			throw new TableIntegrityError("Primary Key or unique value already exists in Table data");
 		if( data[field] && this.data.length>1 )
 			delete data[field];
 	}, this);
 	
-	this.data.forEach(function(row) {
-		// Map data to Field values array
-		var values = this.fields._.getValues()[0].map(function(field) {
-			if( (typeof data[field] === "undefined") || (data[field]===null) ) {
-				if( (typeof row[field] === "undefined") || (row[field]===null) )
-					return "";
-				else
-					return row[field].toString();
-			} else {
-				if( !this.fields[field].validate(data[field]) )
-					throw new FieldValueError( field, data[field] );
-				return data[field].toString();
-			}
-		}, this);
-		
-		// Write row to Table
-		Utils.lock(function(table) {
-			var idx; Database.table(table.sheet.getName()).$DATA.some(function(value, i) {
-				if( value[uniques[0]]===row[uniques[0]] ) {
-					idx = i; return true;
+	Utils.lock(function(table) {
+		table.data.forEach(function(row) {
+			// Map data to Field values array
+			var values = table.fields._.getValues()[0].map(function(field) {
+				if( (typeof data[field] === "undefined") || (data[field]===null) ) {
+					if( (typeof row[field] === "undefined") || (row[field]===null) )
+						return "";
+					else
+						return row[field].toString();
+				} else {
+					if( !table.fields[field].validate(data[field]) )
+						throw new FieldValueError( field, data[field] );
+					return data[field].toString();
 				}
 			});
-			if( idx===parseInt(idx, 10) ) {
-				table.sheet.getRange(idx + 2, 1, 1, values.length).setValues([values]);
-				table.$DATA = Database.table(table.sheet.getName()).$DATA.slice(0);
-			}
-		}, this);
+			
+			// Write row to Table
+			table.sheet.getRange(row.__index__ + 2, 1, 1, values.length).setValues([values]);
+		});
+		table.reset();
 	}, this);
 };
 
@@ -253,25 +174,18 @@ Table_.prototype.update = function( data ) {
  * Remove the current Table data
  */
 Table_.prototype.remove = function() {
-	// Get the name of the Primary Key Field
-	var primary = this.primary();
-	
-	this.data.forEach(function(row) {
-		Utils.lock(function(table) {
-			// Get the row index
-			var idx; Database.table(table.sheet.getName()).$DATA.some(function(value, i) {
-				if( value[primary]===row[primary] ) {
-					idx = i; return true;
-				}
-			});
-			
-			// Remove the row from the Table
-			if( table.sheet.getMaxRows()==2 )
-				table.sheet.getRange(idx + 2, 1, 1, table.sheet.getMaxColumns()).clearContent();
-			else
+	Utils.lock(function(table) {
+		// Clear row contents from the Table
+		table.data.forEach(function(row) {
+			table.sheet.getRange(row.__index__ + 2, 1, 1, table.sheet.getMaxColumns()).clearContent();
+		});
+		
+		// Delete empty rows
+		table.sheet.getRange(2, 1, 1, table.sheet.getMaxColumns()).getValues().forEach(function(row, idx) {
+			if( row.every(function(value) { return value===""; }) && table.sheet.getMaxRows()>2 )
 				table.sheet.deleteRow(idx + 2);
-			table.$DATA = Database.table(table.sheet.getName()).$DATA.slice(0);
-		}, this);
+		});
+		table.reset();
 	}, this);
 };
 
