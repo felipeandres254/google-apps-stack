@@ -12,7 +12,7 @@ function TableCRUDTest() {
 			table.string("test_string_nullable").nullable();
 		});
 		var sheet = gscript.SPREADSHEET.getSheetByName("test_table");
-		sheet.getRange(2, 1, 1, sheet.getMaxColumns()).setValues([["da39a3ee5e", "test", "abcdefghijklmno", "unique", null]]);
+		sheet.getRange(2, 1, 1, sheet.getMaxColumns()).setValues([["da39a3ee5e", "test", "abcdefghijklmno", "unique", ""]]);
 	};
 	unit.close = function() {
 		gscript.Database.drop("test_table");
@@ -35,7 +35,7 @@ function TableCRUDTest() {
 			"test_string":"test_2",
 			"test_string_length":"zyxwvutsrqponml",
 			"test_string_unique":"unique_2",
-			"test_string_nullable":null
+			"test_string_nullable":""
 		});
 		
 		var rows = gscript.Database.table("test_table").get();
@@ -67,7 +67,7 @@ function TableCRUDTest() {
 		try {
 			gscript.Database.table("test_table").where("id", "=", "da39a3ee5e").update({"test_string":null});
 		} catch( error ) {
-			this.assertEquals(error.constructor, FieldValueError);
+			this.assertEquals(error.constructor, gscript.FieldValueError);
 			this.assertEquals(error.field, "test_string");
 		}
 		this.assertEquals(gscript.Database.table("test_table").get()[1].test_string, "aaaaaaaaaa");

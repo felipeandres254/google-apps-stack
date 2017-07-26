@@ -26,14 +26,14 @@ function TableCreateDropTest() {
 	
 	unit.add("Drop non-existing table", function() {
 		this.assertEquals(gscript.SPREADSHEET.getSheetByName("test_table"), null);
-		var error = null;
+		var e = null;
 		try {
 			gscript.Database.drop("test_table");
-		} catch( e ) {
-			error = e;
+		} catch( error ) {
+			e = error
 		}
-		this.assertNotEquals(error, null);
-		this.assertEquals(error.constructor, gscript.TableNotFoundError);
+		this.assertNotEquals(e, null);
+		this.assertEquals(e.constructor, gscript.TableNotFoundError);
 	});
 	
 	// Run and return results

@@ -1,10 +1,10 @@
-gscript.load(PropertiesService.getScriptProperties().getProperties());
+eval(gscript.load(PropertiesService.getScriptProperties().getProperties()));
 
 // ==================================================
 //  RUN TESTS
 // ==================================================
 function TEST() {
-	var tests = [TableCreateDropTest, TableFieldsTest, TableCRUDTest, ModelCRUDTest, ModelEventsTest];
+	var tests = [TableCreateDropTest, SchemaTest, TableCRUDTest, ModelCRUDTest, ModelEventsTest];
 	tests = tests.map(function(unit) { return unit(); });
 	
 	var totals = {"pass":0, "fail":0, "error":0};
