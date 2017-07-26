@@ -33,7 +33,9 @@ Model.init = function( model, schema ) {
 	// Define static methods
 	model.all = function() {
 		model.prototype.table.reset();
-		return model.prototype.table.all().map(function(m) { return new model(m); });
+		return model.prototype.table.all().map(function(m) {
+			m = new model(m); delete m.data.__index__; return m;
+		});
 	};
 	
 	// Extend static methods
@@ -73,8 +75,7 @@ Model.prototype.count = function() {
  */
 Model.prototype.get = function() {
 	return this.constructor.prototype.table.get().map(function(m) {
-		var model = new this.constructor(m); delete model.data.__index__;
-		return model;
+		m = new this.constructor(m); delete m.data.__index__; return m;
 	}, this);
 };
 
@@ -94,6 +95,18 @@ Model.prototype.where = function( field, compare, value ) {
  * Insert or update a Model in the Database
  */
 Model.prototype.save = function() {
+	var date = (new Date).toISOString().substr(0, 19).replace("T", " ");
+	
+	// BEFORE SAVE EVENT
+	(function(model) {
+		// Default behaviour: set 'updated' Field, if exists
+		if( model.constructor.prototype.table.fields._.getValues()[0].indexOf("updated")!==-1 )
+			model.data.updated = date;
+		// Run custom behaviour, if before_save exists
+		if( model.before_save && (typeof model.before_save === "function") )
+			model.before_save();
+	})( this );
+	
 	// Get the name of the Primary Key Field
 	var primary = this.constructor.prototype.table.primary();
 	if( !primary ) {
@@ -101,9 +114,33 @@ Model.prototype.save = function() {
 	}
 	
 	if( !this.data[primary] ) {
-		this.data[primary] = (this.constructor.name + " " + Date.now()).sha1().substr(0, 10);
+		// BEFORE CREATE EVENT
+		(function(model) {
+			// Default behaviour: set Primary Key Field and 'created' Field, if exists
+			model.data[primary] = (model.constructor.name + " " + Date.now()).sha1().substr(0, 10);
+			if( model.constructor.prototype.table.fields._.getValues()[0].indexOf("created")!==-1 )
+				model.data.created = date;
+			// Run custom behaviour, if before_create exists
+			if( model.before_create && (typeof model.before_create === "function") )
+				model.before_create();
+		})( this );
+		
 		this.constructor.prototype.table.insert(this.data);
+		
+		// AFTER CREATE EVENT
+		(function(model) {
+			// Run custom behaviour, if after_create exists
+			if( model.after_create && (typeof model.after_create === "function") )
+				model.after_create();
+		})( this );
 	} else {
+		// BEFORE UPDATE EVENT
+		(function(model) {
+			// Run custom behaviour, if before_update exists
+			if( model.before_update && (typeof model.before_update === "function") )
+				model.before_update();
+		})( this );
+		
 		var value = this.data[primary];
 		this.constructor.prototype.table.reset();
 		this.constructor.prototype.table.fields._.getValues()[0].forEach(function(field) {
@@ -113,7 +150,21 @@ Model.prototype.save = function() {
 		}, this);
 		var table = this.constructor.prototype.table.sheet.getName();
 		Database.table(table).where(primary, "=", value).update(this.data);
+		
+		// AFTER UPDATE EVENT
+		(function(model) {
+			// Run custom behaviour, if after_update exists
+			if( model.after_update && (typeof model.after_update === "function") )
+				model.after_update();
+		})( this );
 	}
+	
+	// AFTER SAVE EVENT
+	(function(model) {
+		// Run custom behaviour, if after_save exists
+		if( model.after_save && (typeof model.after_save === "function") )
+			model.after_save();
+	})( this );
 };
 
 /**
@@ -124,6 +175,13 @@ Model.prototype.save = function() {
 Model.prototype.remove = function( forced ) {
 	var date = (new Date).toISOString().substr(0, 19).replace("T", " ");
 	
+	// BEFORE REMOVE EVENT
+	(function(model) {
+		// Run custom behaviour, if before_remove exists
+		if( model.before_remove && (typeof model.before_remove === "function") )
+			model.before_remove();
+	})( this );
+	
 	if( forced || !this.constructor.prototype.table.fields.deleted ) {
 		// Remove Model(s) from Database
 		this.constructor.prototype.table.remove();
@@ -131,6 +189,13 @@ Model.prototype.remove = function( forced ) {
 		// Soft-delete the current Model(s)
 		this.constructor.prototype.table.update({"deleted":date});
 	}
+	
+	// AFTER REMOVE EVENT
+	(function(model) {
+		// Run custom behaviour, if after_remove exists
+		if( model.after_remove && (typeof model.after_remove === "function") )
+			model.after_remove();
+	})( this );
 };
 
 /**
