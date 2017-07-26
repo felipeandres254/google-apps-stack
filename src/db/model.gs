@@ -19,36 +19,37 @@ Model = function( data ) {
  * Initialize inheritance and static methods
  * 
  * @param {function} model The ORM constructor
- * @param {function} fields The closure of Table Fields
+ * @param {function} schema The closure of Model Schema
  */
-Model.init = function( model, fields ) {
+Model.init = function( model, schema ) {
 	// Inherit from Model
 	model.prototype = Object.create(Model.prototype);
 	model.prototype.constructor = model;
 	
 	try { model.prototype.table = Database.table((new model).table); }
-	catch(e) { Database.create((new model).table, fields); }
+	catch(e) { Database.create((new model).table, schema); }
 	finally { model.prototype.table = Database.table((new model).table); }
 	
 	// Define static methods
 	model.all = function() {
+		model.prototype.table.reset();
 		return model.prototype.table.all().map(function(m) { return new model(m); });
 	};
 	
 	// Extend static methods
 	model.count = function() {
-		model.prototype.table.data = model.prototype.table.all();
+		model.prototype.table.reset();
 		if( model.prototype.table.fields.deleted )
 			return model.prototype.table.where("deleted", "=", "").get().length;
 		else
 			return model.prototype.table.get().length;
 	};
 	model.where = function(a, b, c) {
-		model.prototype.table.data = model.prototype.table.all();
+		model.prototype.table.reset();
 		return (new model).where(a, b, c);
 	};
 	model.removed = function() {
-		model.prototype.table.data = model.prototype.table.all();
+		model.prototype.table.reset();
 		return model.prototype.table.fields.deleted ? model.where("deleted", "!=", "") : model;
 	};
 };
@@ -71,7 +72,10 @@ Model.prototype.count = function() {
  * @return {Array} The Model objects
  */
 Model.prototype.get = function() {
-	return this.constructor.prototype.table.get().map(function(m) { return new this.constructor(m); }, this);
+	return this.constructor.prototype.table.get().map(function(m) {
+		var model = new this.constructor(m); delete model.data.__index__;
+		return model;
+	}, this);
 };
 
 /**
@@ -92,7 +96,6 @@ Model.prototype.where = function( field, compare, value ) {
 Model.prototype.save = function() {
 	// Get the name of the Primary Key Field
 	var primary = this.constructor.prototype.table.primary();
-	
 	if( !primary ) {
 		this.constructor.prototype.table.insert(this.data); return;
 	}
@@ -102,7 +105,7 @@ Model.prototype.save = function() {
 		this.constructor.prototype.table.insert(this.data);
 	} else {
 		var value = this.data[primary];
-		this.constructor.prototype.table.data = this.constructor.prototype.table.all();
+		this.constructor.prototype.table.reset();
 		this.constructor.prototype.table.fields._.getValues()[0].forEach(function(field) {
 			var attrs = this.constructor.prototype.table.fields[field].attrs;
 			if( attrs.indexOf("primary")!==-1 || attrs.indexOf("unique")!==-1 )
