@@ -1,7 +1,7 @@
 // ==================================================
 //  Google Script Backend
 //  Author:  Andrés Felipe Torres (@felipeandres254)
-//  Version: v0.2
+//  Version: v0.3
 //  URL:     github.com/felipeandres254/gscript
 // ==================================================
 
@@ -29,6 +29,7 @@ ROOT = null;
  * - Configure root Folder for Files
  * 
  * @param {object} properties The Script Properties
+ * @return {string} A command to save the Database ID
  */
 function load( properties ) {
 	CONFIG = Object.keys(properties).reduce(function(config, key) {
@@ -40,6 +41,19 @@ function load( properties ) {
 		eval("config." + key + " = " + properties[key]); return config;
 	}, {});
 	
-	SPREADSHEET = CONFIG.database ? SpreadsheetApp.openById(CONFIG.database) : SpreadsheetApp.getActiveSpreadsheet();
 	ROOT = DriveApp.getFileById(ScriptApp.getScriptId()).getParents().next();
+	try { DriveApp.getFileById(CONFIG.database); }
+	catch(e) { delete CONFIG.database; }
+	
+	if( !CONFIG.database ) {
+		CONFIG.database = SpreadsheetApp.create("GScript DB", 1, 1).getId();
+		var file = DriveApp.getFileById(CONFIG.database);
+		var source = file.getParents().next();
+		ROOT.addFile(file); source.removeFile(file);
+		
+		// Placeholder table
+		SpreadsheetApp.openById(CONFIG.database).getSheetByName("Sheet1").setName(".");
+	}
+	SPREADSHEET = SpreadsheetApp.openById(CONFIG.database);
+	return "PropertiesService.getScriptProperties().setProperty('database', JSON.stringify(gscript.CONFIG.database))";
 };
