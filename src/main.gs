@@ -56,4 +56,4 @@ function load( properties ) {
 	}
 	SPREADSHEET = SpreadsheetApp.openById(CONFIG.database);
 	return "PropertiesService.getScriptProperties().setProperty('database', JSON.stringify(gscript.CONFIG.database))";
-};
+}
