@@ -39,13 +39,14 @@ Utils.template = function( route ) {
 		folder = folders && folders.hasNext() ? folders.next(): null;
 	});
 	if( !folder )
-		return "";
+		throw new FileNotFoundError;
 	
 	var files = folder.getFilesByName(route.split("/").slice(-1)[0]);
 	if( !files.hasNext() )
-		return "";
-	return HtmlService.createTemplate(files.next().getBlob()).evaluate().getContent();
+		throw new FileNotFoundError;
+	return files.next().getBlob().getDataAsString();
 };
+
 
 /**
  * Send an email from the Script owner account
