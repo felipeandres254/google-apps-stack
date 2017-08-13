@@ -1,4 +1,4 @@
-eval(gscript.load(PropertiesService.getScriptProperties().getProperties()));
+eval(gscript.LOAD(PropertiesService.getScriptProperties().getProperties()));
 
 // ==================================================
 //  RUN TESTS
