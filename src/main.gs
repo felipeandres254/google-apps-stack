@@ -26,12 +26,13 @@ ROOT = null;
 /**
  * Load configuration from Script Properties
  * - Configure main Spreadsheet for Database
- * - Configure root Folder for Files
+ * - Configure root Folder for Drive filesystem
+ * - Configure route functions
  * 
  * @param {object} properties The Script Properties
- * @return {string} A command to save the Database ID
+ * @return {string} A command to execute in the client
  */
-function load( properties ) {
+function LOAD( properties ) {
 	CONFIG = Object.keys(properties).reduce(function(config, key) {
 		key.split(".").slice(0, -1).forEach(function(part, idx) {
 			var k = key.split(".").splice(0, idx+1).join(".");
@@ -45,6 +46,9 @@ function load( properties ) {
 	try { DriveApp.getFileById(CONFIG.database); }
 	catch(e) { delete CONFIG.database; }
 	
+	if( !ROOT.getFoldersByName("templates").hasNext() )
+		ROOT.addFolder(DriveApp.createFolder("templates"));
+	
 	if( !CONFIG.database ) {
 		CONFIG.database = SpreadsheetApp.create("GScript DB", 1, 1).getId();
 		var file = DriveApp.getFileById(CONFIG.database);
@@ -55,5 +59,13 @@ function load( properties ) {
 		SpreadsheetApp.openById(CONFIG.database).getSheetByName("Sheet1").setName(".");
 	}
 	SPREADSHEET = SpreadsheetApp.openById(CONFIG.database);
-	return "PropertiesService.getScriptProperties().setProperty('database', JSON.stringify(gscript.CONFIG.database))";
+	
+	return [
+		"PropertiesService.getScriptProperties().setProperty('database', JSON.stringify(gscript.CONFIG.database))",
+		"function get(request) { return gscript.Route.match(request); }",
+		"function post(request) { return gscript.Route.match(request); }",
+		"function doGet(request) { return gscript.Route.serve(request); }",
+		"function doPost(request) { var response = JSON.stringify(gscript.Route.match(request))",
+		"return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON); }"
+	].join("; ");
 }
