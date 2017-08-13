@@ -26,10 +26,11 @@ ROOT = null;
 /**
  * Load configuration from Script Properties
  * - Configure main Spreadsheet for Database
- * - Configure root Folder for Files
+ * - Configure root Folder for Drive filesystem
+ * - Configure route functions
  * 
  * @param {object} properties The Script Properties
- * @return {string} A command to save the Database ID
+ * @return {string} A command to execute in the client
  */
 function LOAD( properties ) {
 	CONFIG = Object.keys(properties).reduce(function(config, key) {
@@ -45,6 +46,9 @@ function LOAD( properties ) {
 	try { DriveApp.getFileById(CONFIG.database); }
 	catch(e) { delete CONFIG.database; }
 	
+	if( !ROOT.getFoldersByName("templates").hasNext() )
+		ROOT.addFolder(DriveApp.createFolder("templates"));
+	
 	if( !CONFIG.database ) {
 		CONFIG.database = SpreadsheetApp.create("GScript DB", 1, 1).getId();
 		var file = DriveApp.getFileById(CONFIG.database);
@@ -55,6 +59,7 @@ function LOAD( properties ) {
 		SpreadsheetApp.openById(CONFIG.database).getSheetByName("Sheet1").setName(".");
 	}
 	SPREADSHEET = SpreadsheetApp.openById(CONFIG.database);
+	
 	return [
 		"PropertiesService.getScriptProperties().setProperty('database', JSON.stringify(gscript.CONFIG.database))",
 		"function get(request) { return gscript.Route.match(request); }",
