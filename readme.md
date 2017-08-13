@@ -12,6 +12,8 @@ This project is published as an Apps Script library, so you can follow these ste
 2. Go to Libraries menu in "Resources > Libraries..."
 3. Enter the Script ID `1Bw9l0LWrUfg7DPkhvxNtsudVpJiIwr_YeCkvnieTr14IAvAPUNKb1QDi`
 4. Select the latest version (currently ' **30** v0.3 ') and click the "Save" button
+5. Create a new script file with the following line:
+```eval(gscript.LOAD(PropertiesService.getScriptProperties().getProperties()));```
 
 ### Usage
 
