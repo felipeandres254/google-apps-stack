@@ -4,6 +4,16 @@
 Schedule = {"tasks_":[]};
 
 /**
+ * Create a new Task without enabling
+ * 
+ * @param {function} task The task to run
+ * @return {Task_} The Task object
+ */
+Schedule.task = function(task) {
+	return new Task_(task);
+};
+
+/**
  * Reset the schedule trigger
  * 1. Remove all time-based triggers from project
  * 2. Set schedule trigger for the next hour
@@ -26,7 +36,6 @@ Schedule.reset = function() {
 Schedule.run = function() {
 	Schedule.reset();
 	
-	// Run scheduled tasks
 	var date = new Date();
 	date.setMilliseconds(0); date.setSeconds(0); date.setMinutes(0);
 	Schedule.tasks_.forEach(function(task) {
@@ -38,7 +47,10 @@ Schedule.run = function() {
 			return;
 		if( task.weekday!=="*" && task.weekday!==(date.getDay()+1) )
 			return;
-		if( !!(task.action && task.action.constructor && task.action.call && task.action.apply) )
-			task.action();
+		if( !task.run || !task.run.constructor || !task.run.call || !task.run.apply )
+			return;
+		
+		try { task.run(); }
+		catch( error ) {}
 	});
 };
