@@ -47,7 +47,7 @@ function LOAD( properties ) {
 	catch(e) { delete CONFIG.database; }
 	
 	if( !ROOT.getFoldersByName("templates").hasNext() )
-		ROOT.addFolder(DriveApp.createFolder("templates"));
+		ROOT.createFolder("templates");
 	
 	if( !CONFIG.database ) {
 		CONFIG.database = SpreadsheetApp.create("GScript DB", 1, 1).getId();
