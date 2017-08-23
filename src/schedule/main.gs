@@ -6,11 +6,12 @@ Schedule = {"tasks_":[]};
 /**
  * Create a new Task without enabling
  * 
- * @param {function} task The task to run
+ * @param {string} name The Task name
+ * @param {function} task The Task to run
  * @return {Task_} The Task object
  */
-Schedule.task = function(task) {
-	return new Task_(task);
+Schedule.task = function( name, task ) {
+	return new Task_( name, task );
 };
 
 /**
