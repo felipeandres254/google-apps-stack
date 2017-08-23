@@ -42,7 +42,7 @@ Route.serve = function( request ) {
 	request.pathInfo = "templates/" + request.pathInfo;
 	
 	try {
-		response = Utils.template(request.pathInfo);
+		response = File.read(request.pathInfo);
 	} catch( error ) {
 		return ContentService.createTextOutput("404").setMimeType(ContentService.MimeType.TEXT);
 	}
