@@ -5,9 +5,11 @@
  * Define a Task for the Schedule
  * 
  * @constructor
- * @param {function} task The task to run
+ * @param {string} name, The Task name
+ * @param {function} task The Task to run
  */
-function Task_( task ) {
+function Task_( name, task ) {
+	this.name = name;
 	this.run = task;
 }
 
