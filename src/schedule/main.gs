@@ -37,8 +37,11 @@ Schedule.reset = function() {
 Schedule.run = function() {
 	Schedule.reset();
 	
-	var date = new Date();
+	var date = new Date;
 	date.setMilliseconds(0); date.setSeconds(0); date.setMinutes(0);
+	if( Schedule.tasks_.length>0 )
+		File.write("logs/schedule.log", "[" + date.toString() + "] Running scheduled tasks", true);
+	
 	Schedule.tasks_.forEach(function(task) {
 		if( task.hour!=="*" && task.hour!==date.getHours() )
 			return;
@@ -51,7 +54,20 @@ Schedule.run = function() {
 		if( !task.run || !task.run.constructor || !task.run.call || !task.run.apply )
 			return;
 		
-		try { task.run(); }
-		catch( error ) {}
+		try {
+			date = new Date;
+			File.write("logs/schedule.log", "[" + date.toString() + "] Running task '" + task.name + "'", true);
+			task.run();
+			date = new Date;
+			File.write("logs/schedule.log", "[" + date.toString() + "] Finishing task '" + task.name + "'", true);
+		} catch( error ) {
+			error = error.name + " " + error.message + " " + JSON.stringify(error, null, 2);
+			date = new Date;
+			File.write("logs/schedule.log", "[" + date.toString() + "] Error on task '" + task.name + "'! See error.log for details", true);
+			File.write("logs/error.log", "[" + date.toString() + "] Error on task '" + task.name + "'\n" + error, true);
+		}
 	});
+	
+	if( Schedule.tasks_.length>0 )
+		File.write("logs/schedule.log", "[" + date.toString() + "] Closing schedule", true);
 };
