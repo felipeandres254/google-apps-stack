@@ -73,6 +73,17 @@ File.write = function( route, data, append ) {
 	file.setContent(data);
 };
 
+/**
+ * Append a log entry to a File object
+ * 
+ * @param {string} route The File route
+ * @param {string} log The log entry
+ */
+File.log = function( route, log ) {
+	var date = new Date;
+	File.write(route, "[" + date.toString() + "] " + log, true);
+};
+
 // ==================================================
 //  FILE ERRORS
 // ==================================================
