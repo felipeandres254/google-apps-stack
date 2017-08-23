@@ -52,7 +52,7 @@ File.read = function( route ) {
 };
 
 /**
- * Write to File object
+ * Write to a File object
  * 
  * @param {string} route The File route
  * @param {string} data The data to write
@@ -61,15 +61,15 @@ File.read = function( route ) {
 File.write = function( route, data, append ) {
 	if( !/\n$/.test(data) )
 		data += "\n";
-	if( append )
-		data = File.read( route ) + data;
 	var file;
 	try {
 		file = File.get( route );
 	} catch( error ) {
 		var folder = Folder.get(route.split("/").slice(0, -1).join("/"));
-		file = folder.createFile(route.split("/").slice(-1)[0]);
+		file = folder.createFile(route.split("/").slice(-1)[0], "");
 	}
+	if( append )
+		data = File.read( route ) + data;
 	file.setContent(data);
 };
 
