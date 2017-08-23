@@ -27,28 +27,6 @@ Utils.lock = function( callable, params ) {
 };
 
 /**
- * Load and evaluate a template file from Google Drive
- * 
- * @param {string} route The route to the file, relative to ROOT
- * @return {string} The evaluated template
- */
-Utils.template = function( route ) {
-	var folder = DriveApp.getFolderById(ROOT.getId());
-	route.split("/").slice(0, -1).forEach(function(f) {
-		var folders = folder ? folder.getFoldersByName(f) : null;
-		folder = folders && folders.hasNext() ? folders.next(): null;
-	});
-	if( !folder )
-		throw new FileNotFoundError;
-	
-	var files = folder.getFilesByName(route.split("/").slice(-1)[0]);
-	if( !files.hasNext() )
-		throw new FileNotFoundError;
-	return files.next().getBlob().getDataAsString();
-};
-
-
-/**
  * Send an email from the Script owner account
  * 
  * @param {object} data The email data, as described in https://developers.google.com/apps-script/reference/mail/mail-app
