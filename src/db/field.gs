@@ -43,6 +43,24 @@ Field_.read = function( table, name ) {
 };
 
 /**
+ * Parse the Field value
+ * 
+ * @param {string} The string Field value
+ * @return {*} The parsed Field value
+ */
+Field_.prototype.value = function( value ) {
+	if( this.type==="boolean" )
+		return value==="true";
+	if( this.type==="int" )
+		return parseInt(value, 10);
+	if( this.type==="float" )
+		return parseFloat(value);
+	if( this.attrs.indexOf("nullable")!==-1 && value=="" )
+		return null;
+	return value;
+};
+
+/**
  * Write the Field to a Table
  * 
  * @return {Field_} The Field object
@@ -126,8 +144,6 @@ Field_.prototype.validate = function( value ) {
 			validator = this.type.replace("string", ".") + (this.length ? ("{"+this.length+"}") : "*"); break;
 		case "hex":
 			validator = this.type.replace("hex", "[a-f0-9]") + (this.length ? ("{"+this.length+"}") : "*"); break;
-		case "num":
-			validator = this.type.replace("num", "[0-9]") + (this.length ? ("{"+this.length+"}") : "*"); break;
 		case "alpha":
 			validator = this.type.replace("alpha", "[a-z]") + (this.length ? ("{"+this.length+"}") : "*"); break;
 		case "alphanum":

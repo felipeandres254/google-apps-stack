@@ -70,10 +70,9 @@ Schema_.prototype.primary = function( name ) {
 // STRING FIELD DEFINITIONS
 //   string   => Any character
 //   hex      => Only hexadecimal characters  ('0' to '9' and 'a' to 'f')
-//   num      => Only numeric characters      ('0' to '9')
 //   alpha    => Only alphabetic characters   ('a' to 'z')
 //   alphanum => Only alphanumeric characters ('0' to '9' and 'a' to 'z')
-["string", "hex", "num", "alpha", "alphanum"].forEach(function(type) {
+["string", "hex", "alpha", "alphanum"].forEach(function(type) {
 	/**
 	 * Add a new Field of type
 	 * 
