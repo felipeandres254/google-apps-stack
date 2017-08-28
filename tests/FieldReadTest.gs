@@ -34,8 +34,8 @@ function FieldReadTest() {
 		this.assertEquals(data[0].test_int, 987654);
 		this.assertEquals(data[1].test_int, 123456);
 		
-		this.assertEquals(data[0].test_int, -parseFloat(Math.E.toFixed(6)));
-		this.assertEquals(data[1].test_int, parseFloat(Math.PI.toFixed(6)));
+		this.assertEquals(data[0].test_float, -parseFloat(Math.E.toFixed(6)));
+		this.assertEquals(data[1].test_float, parseFloat(Math.PI.toFixed(6)));
 	});
 	
 	// Run and return results
