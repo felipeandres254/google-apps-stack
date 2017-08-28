@@ -4,7 +4,7 @@ eval(gscript.LOAD(PropertiesService.getScriptProperties().getProperties()));
 //  RUN TESTS
 // ==================================================
 function TEST() {
-	var tests = [TableCreateDropTest, SchemaTest, TableCRUDTest, ModelCRUDTest, ModelEventsTest];
+	var tests = [TableCreateDropTest, SchemaTest, TableCRUDTest, FieldReadTest, ModelCRUDTest, ModelEventsTest, FileTest];
 	tests = tests.map(function(unit) { return unit(); });
 	
 	var totals = {"pass":0, "fail":0, "error":0};
