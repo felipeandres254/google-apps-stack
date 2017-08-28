@@ -42,8 +42,6 @@ function SchemaTest() {
 			table.string("test_string_length", 25);
 			table.hex("test_hex");
 			table.hex("test_hex_length", 20);
-			table.num("test_num");
-			table.num("test_num_length", 15);
 			table.alpha("test_alpha");
 			table.alpha("test_alpha_length", 10);
 			table.alphanum("test_alphanum");
@@ -66,14 +64,6 @@ function SchemaTest() {
 		cell = sheet.getRange(1, 4, 1, 1);
 		this.assertEquals(cell.getValues()[0][0], "test_hex_length");
 		this.assertEquals(cell.getNotes()[0][0], "hex,20");
-		
-		cell = sheet.getRange(1, 5, 1, 1);
-		this.assertEquals(cell.getValues()[0][0], "test_num");
-		this.assertEquals(cell.getNotes()[0][0], "num");
-		
-		cell = sheet.getRange(1, 6, 1, 1);
-		this.assertEquals(cell.getValues()[0][0], "test_num_length");
-		this.assertEquals(cell.getNotes()[0][0], "num,15");
 		
 		cell = sheet.getRange(1, 7, 1, 1);
 		this.assertEquals(cell.getValues()[0][0], "test_alpha");
